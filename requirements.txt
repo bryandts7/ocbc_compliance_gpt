@@ -1,0 +1,16 @@
+streamlit==1.36.0
+langchain-core==0.2.10
+langchain==0.2.6
+langchain-community==0.2.6
+python-dotenv
+langchain_openai==0.1.13
+neo4j
+pinecone
+langchain_pinecone
+retry
+bson
+rank_bm25
+lark
+pymongo
+langchain_mongodb
+motor
