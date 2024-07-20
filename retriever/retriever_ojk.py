@@ -95,7 +95,7 @@ def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, e
     )
 
     # rerank with Cohere
-    compressor = CohereRerank(cohere_api_key=config['cohere_api_key'], top_n=top_n)
+    compressor = CohereRerank(cohere_api_key=config['cohere_api_key'], top_n=top_n, model="rerank-multilingual-v3.0")
     retriever = ContextualCompressionRetriever(
         base_compressor=compressor, base_retriever=compression_retriever
     )
