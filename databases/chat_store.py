@@ -37,8 +37,8 @@ class LimitedRedisChatMessageHistory(RedisChatMessageHistory):
 class RedisChatStore:
     """A store for managing chat histories using Redis."""
 
-    def __init__(self, config: dict, k: int = 5):
-        self.redis_uri = config["redis_uri"] + "/1"
+    def __init__(self, config: dict, k: int = 5, db_id: int = 1):
+        self.redis_uri = config["redis_uri"] + "/" + str(db_id)
         self.redis_client = redis.from_url(self.redis_uri)
         self.k = k
 

@@ -30,9 +30,9 @@ class VectorIndexManager(ABC):
 
 # ================== REDIS ==================
 class RedisIndexManager(VectorIndexManager):
-    def __init__(self, embed_model, index_name="ojk", config: dict = {}):
+    def __init__(self, embed_model, index_name="ojk", config: dict = {}, db_id: int = 0):
         super().__init__(embed_model, index_name)
-        self.redis_uri = config["redis_uri"] + "/0"
+        self.redis_uri = config["redis_uri"] + "/" + str(db_id)
         self.redis_client = redis.from_url(self.redis_uri)
         self.index_name = index_name
         self.embed_model = embed_model
