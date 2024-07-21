@@ -61,6 +61,7 @@ class RedisIndexManager(VectorIndexManager):
                 embedding=self.embed_model,
                 redis_url=self.redis_uri,
                 index_name=self.index_name
+                
             )   
             time.sleep(4)
             print(f"Loaded 1-{batch_size} documents")
