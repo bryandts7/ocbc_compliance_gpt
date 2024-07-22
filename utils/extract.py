@@ -84,6 +84,12 @@ def extract_text(ocr, file_path):
         # raise ValueError("File not supported!")
 
 
+def add_contextual_header(document):
+    header = f"DOC NAME: {document.metadata['title']} | {document.metadata['type_of_regulation']}\n\n"
+    document.page_content = header + document.page_content
+    return document
+
+
 def process_documents(ocr, data_dir, metadata):
     text_data = []
     required_fields = [
@@ -107,9 +113,13 @@ def process_documents(ocr, data_dir, metadata):
                 for page in page_metadata:
                     page_specific_metadata = file_metadata.copy()
                     page_specific_metadata['page_number'] = page['page_number']
-                    text_data.append(Document(page_content=page['text'], metadata=page_specific_metadata))
+                    document = Document(page_content=page['text'], metadata=page_specific_metadata)
+                    document = add_contextual_header(document)
+                    text_data.append(document)
             else:
-                text_data.append(Document(page_content=text, metadata=file_metadata))
+                document = Document(page_content=text, metadata=file_metadata)
+                document = add_contextual_header(document)
+                text_data.append(document)
 
     return text_data
 

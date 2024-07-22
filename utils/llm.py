@@ -29,7 +29,7 @@ def get_llm(company="azure_openai", model="gpt-35-crayon"):
         api_key = os.getenv('OPENAI_API_KEY')
 
         if not model:
-            model = "gpt-3.5-turbo"
+            model = "gpt-4o-mini"
 
         llm = ChatOpenAI(api_key=api_key, model=model, temperature=0)
     
@@ -53,12 +53,11 @@ def get_embedding_model(company="azure_openai", model="embedding-ada-crayon"):
         api_key = os.getenv('OPENAI_API_KEY')
 
         if not model:
-            model = "text-embedding-ada-002"
+            model = "text-embedding-3-small"
 
         embed_model = OpenAIEmbeddings(
             api_key=api_key,
             model=model,
-            batch_size=256
         )
     
     return embed_model
