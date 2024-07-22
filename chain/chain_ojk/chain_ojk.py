@@ -20,7 +20,7 @@ from typing import Union
 # ===== formatting functions =====
 def _format_metadata(metadata):
     """Remove filename from metadata."""
-    # check if file_name is in metadata
+    # check if file_name is in metadata, if so remove it
     if "file_name" in metadata:
         metadata.pop("file_name", None)
     return metadata
@@ -34,7 +34,7 @@ def _combine_documents(docs):
 
 
 # ===== INI MASIH OJK AJA, NTAR GABUNGING SEMUA LOGIC CHAIN NYA DISINI =====
-def create_chain_with_chat_history(contextualize_q_prompt_str: str, qa_system_prompt_str: str, retriever: BaseRetriever, llm_model: ModelName, chat_store: Union[MongoDBChatStore, RedisChatStore]):
+def create_ojk_chain(contextualize_q_prompt_str: str, qa_system_prompt_str: str, retriever: BaseRetriever, llm_model: ModelName):
     CONTEXTUALIZE_Q_PROMPT_STR = contextualize_q_prompt_str
     QA_SYSTEM_PROMPT_STR = qa_system_prompt_str
     QA_PROMPT = ChatPromptTemplate.from_template(QA_SYSTEM_PROMPT_STR)
@@ -53,48 +53,4 @@ def create_chain_with_chat_history(contextualize_q_prompt_str: str, qa_system_pr
             "context": itemgetter("context"),
         }
     )
-
-    final_chain = RunnableWithMessageHistory(
-        conversational_qa_with_context_chain,
-        get_session_history=chat_store.get_session_history,
-        input_messages_key="question",
-        output_messages_key="answer",
-        history_messages_key="chat_history",
-        history_factory_config=[
-            ConfigurableFieldSpec(
-                id="user_id",
-                annotation=str,
-                name="User ID",
-                description="Unique identifier for the user.",
-                default="",
-                is_shared=True,
-            ),
-            ConfigurableFieldSpec(
-                id="conversation_id",
-                annotation=str,
-                name="Conversation ID",
-                description="Unique identifier for the conversation.",
-                default="",
-                is_shared=True,
-            ),
-        ],
-    )
-    return final_chain
-
-
-# ===== GET RESPONSE =====
-
-def get_response(question: str, chain, user_id: str, conversation_id: str):
-    response = chain.invoke(
-        {"question": question},
-        config={
-            "configurable": {"user_id": user_id, "conversation_id": conversation_id}
-        },
-    )
-    return response
-
-
-def print_answer_stream(question: str, chain, user_id: str, conversation_id: str):
-    for chunk in chain.stream({"question": question}, config={"configurable": {"user_id": user_id, "conversation_id": conversation_id}}):
-        if 'answer' in chunk:
-            print(chunk['answer'], end='', flush=True)
+    return conversational_qa_with_context_chain
