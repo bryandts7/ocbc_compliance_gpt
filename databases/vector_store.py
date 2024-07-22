@@ -37,9 +37,18 @@ class RedisIndexManager(VectorIndexManager):
         self.index_name = index_name
         self.embed_model = embed_model
 
-    def delete_all(self):
-        self.redis_client.flushdb()
-        print("Deleted all keys in the database.")
+
+
+    def delete_index(self):
+        # Delete the index
+        try:
+            self.redis_client.ft(self.index_name).dropindex(delete_documents=True)
+            print(f"Deleted index '{self.index_name}' and its associated documents.")
+        except redis.exceptions.ResponseError as e:
+            if "Unknown index name" in str(e):
+                print(f"Index '{self.index_name}' does not exist.")
+            else:
+                raise
 
     def store_vector_index(self, docs, batch_size=200):
         log_path = './databases/store_logs'
@@ -53,6 +62,9 @@ class RedisIndexManager(VectorIndexManager):
                 start_split_idx = batch_size
             print(f"Start loading from idx: {idx}")
         else:
+            # crreate log file
+            with open(os.path.join(log_path, 'start_store_idx_' + self.index_name + '.txt'), 'w') as f:
+                f.write(str(0))
             start_split_idx = batch_size
 
         if start_split_idx <= batch_size:
@@ -64,7 +76,16 @@ class RedisIndexManager(VectorIndexManager):
                 
             )   
             time.sleep(4)
-            print(f"Loaded 1-{batch_size} documents")
+            
+
+            if len(docs) <= batch_size:
+                with open(os.path.join(log_path, 'start_store_idx_' + self.index_name + '.txt'), 'w') as f:
+                    f.write(str(len(docs)))
+                print(f"Loaded 1-{len(docs)} documents")
+            else:
+                with open(os.path.join(log_path, 'start_store_idx_' + self.index_name + '.txt'), 'w') as f:
+                    f.write(str(batch_size))
+                print(f"Loaded 1-{batch_size} documents")
         
             self.vector_store.write_schema('./databases/redis_schema/vectorstore_redis_schema_' + self.index_name + '.yaml')
         else:
