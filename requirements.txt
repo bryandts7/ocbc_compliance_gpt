@@ -13,4 +13,6 @@ rank_bm25
 lark
 pymongo
 langchain_mongodb
+langchain_cohere
+cohere
 motor
