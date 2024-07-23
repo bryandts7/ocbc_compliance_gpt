@@ -5,9 +5,6 @@ from langchain_core.runnables import RunnableLambda
 from langchain_core.language_models.base import BaseLanguageModel
 
 
-
-
-
 # ====== CHAIN ROUTING ======
 
 # Query of routing
