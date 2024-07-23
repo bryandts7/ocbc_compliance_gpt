@@ -14,3 +14,5 @@ lark
 pymongo
 langchain_mongodb
 motor
+fastapi
+asyncio
