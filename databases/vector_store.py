@@ -37,8 +37,6 @@ class RedisIndexManager(VectorIndexManager):
         self.index_name = index_name
         self.embed_model = embed_model
 
-
-
     def delete_index(self):
         # Delete the index
         try:

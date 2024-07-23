@@ -34,7 +34,7 @@ def _combine_documents(docs):
 
 
 # ===== INI MASIH OJK AJA, NTAR GABUNGING SEMUA LOGIC CHAIN NYA DISINI =====
-def create_ojk_chain(contextualize_q_prompt_str: str, qa_system_prompt_str: str, retriever: BaseRetriever, llm_model: ModelName):
+def create_bi_ojk_chain(contextualize_q_prompt_str: str, qa_system_prompt_str: str, retriever: BaseRetriever, llm_model: ModelName):
     CONTEXTUALIZE_Q_PROMPT_STR = contextualize_q_prompt_str
     QA_SYSTEM_PROMPT_STR = qa_system_prompt_str
     QA_PROMPT = ChatPromptTemplate.from_template(QA_SYSTEM_PROMPT_STR)
