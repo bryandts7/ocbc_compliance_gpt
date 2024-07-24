@@ -1,3 +1,4 @@
+datasets
 streamlit
 langchain-core
 langchain
@@ -5,6 +6,8 @@ langchain-community
 python-dotenv
 langchain_openai
 neo4j
+numpy
+ragas
 retry
 rank_bm25
 lark
@@ -24,3 +27,4 @@ redis
 cohere
 langchain-cohere
 langchain-cli
+scikit-learn
