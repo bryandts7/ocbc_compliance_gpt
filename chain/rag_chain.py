@@ -17,11 +17,27 @@ from utils.models import ModelName
 from typing import Union
 from langchain_core.runnables.base import Runnable
 
-from chain.chain_bi_ojk.chain_bi_ojk import create_bi_ojk_chain
+
+from chain.chain_ojk.chain_ojk import create_ojk_chain
+
+# ===== formatting functions =====
+def _format_metadata(metadata):
+    """Remove filename from metadata."""
+    # check if file_name is in metadata, if so remove it
+    if "file_name" in metadata:
+        metadata.pop("file_name", None)
+    return metadata
+
+
+def _combine_documents(docs):
+    """Combine documents into a single JSON string."""
+    doc_list = [{"metadata": _format_metadata(
+        doc.metadata), "page_content": doc.page_content} for doc in docs]
+    return json.dumps(doc_list, indent=2)
 
 
 def create_chain(contextualize_q_prompt_str: str, qa_system_prompt_str: str, retriever: BaseRetriever, llm_model: ModelName):
-    create_chain = create_bi_ojk_chain(contextualize_q_prompt_str, qa_system_prompt_str, retriever, llm_model)
+    create_chain = create_ojk_chain(contextualize_q_prompt_str, qa_system_prompt_str, retriever, llm_model)
     return create_chain
 
 # ===== INI MASIH OJK AJA, NTAR GABUNGING SEMUA LOGIC CHAIN NYA DISINI =====
@@ -52,6 +68,7 @@ def create_chain_with_chat_history(chat_store: Union[MongoDBChatStore, RedisChat
         ],
     )
     return final_chain
+
 
 # ===== GET RESPONSE =====
 
