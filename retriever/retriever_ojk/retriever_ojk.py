@@ -53,27 +53,27 @@ document_content_description = "The content of the document"
 
 def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, top_n: int = 7, top_k:int = 20, config: dict = {}):
 
-    top_k = top_k // 4
+    top_k = top_k // 2
 
-    retriever_self_query_similarity = SelfQueryRetriever.from_llm(
-    llm=llm_model,
-    vectorstore=vector_store,
-    document_contents=document_content_description,
-    metadata_field_info=metadata_field_info,
-    enable_limit=False,
-    search_type="similarity",
-    search_kwargs={"k": top_k},
-    )
+    # retriever_self_query_similarity = SelfQueryRetriever.from_llm(
+    # llm=llm_model,
+    # vectorstore=vector_store,
+    # document_contents=document_content_description,
+    # metadata_field_info=metadata_field_info,
+    # enable_limit=False,
+    # search_type="similarity",
+    # search_kwargs={"k": top_k},
+    # )
     
-    retriever_self_query_mmr = SelfQueryRetriever.from_llm(
-    llm=llm_model,
-    vectorstore=vector_store,
-    document_contents=document_content_description,
-    metadata_field_info=metadata_field_info,
-    enable_limit=False,
-    search_type="mmr",
-    search_kwargs={"k": top_k},
-    )
+    # retriever_self_query_mmr = SelfQueryRetriever.from_llm(
+    # llm=llm_model,
+    # vectorstore=vector_store,
+    # document_contents=document_content_description,
+    # metadata_field_info=metadata_field_info,
+    # enable_limit=False,
+    # search_type="mmr",
+    # search_kwargs={"k": top_k},
+    # )
 
     retriever_similarity = vector_store.as_retriever(
         search_type="similarity", 
@@ -85,7 +85,7 @@ def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, e
     )
 
     # merge retrievers
-    lotr = MergerRetriever(retrievers=[retriever_similarity, retriever_mmr, retriever_self_query_mmr, retriever_self_query_similarity])
+    lotr = MergerRetriever(retrievers=[retriever_similarity, retriever_mmr])
 
     # remove redundant documents
     filter = EmbeddingsRedundantFilter(embeddings=embed_model)

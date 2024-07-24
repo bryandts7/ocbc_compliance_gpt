@@ -11,6 +11,9 @@ from utils.models import ModelName
 from typing import Union
 from langchain_core.runnables.base import Runnable
 from langchain.chains.graph_qa.cypher import GraphCypherQAChain
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import PromptTemplate
+
 
 from chain.chain_routing import question_router_chain, ketentuan_router_chain
 from chain.chain_ojk.chain_ojk import create_ojk_chain
@@ -21,14 +24,17 @@ from constant.ojk.prompt import CONTEXTUALIZE_Q_PROMPT_OJK, QA_SYSTEM_PROMPT_OJK
 
 
 def routing_ketentuan_chain(chain, llm_model):
+    question_router = ketentuan_router_chain(llm_model, KETENTUAN_ANSWERING_PROMPT)
     result_chain =  RunnablePassthrough() | {
-                       "question": itemgetter("question"), 
-                        "answer": chain
-                    } | { 
-                        "question": itemgetter("question"),
-                        "answer": itemgetter("answer"),
-                        "is_answered": ketentuan_router_chain(llm_model, itemgetter("question"), itemgetter("answer"), KETENTUAN_ANSWERING_PROMPT)
-                    } | RunnablePassthrough()
+                        "question": itemgetter("question"), 
+                        "answer": chain,
+                        "chat_history" : itemgetter("chat_history")
+                     } | { 
+                         "question": itemgetter("question"),
+                         "answer": itemgetter("answer"),
+                         "is_answered": question_router,
+                         "chat_history" : itemgetter("chat_history")}
+                    # } | RunnablePassthrough()
     return result_chain
 
 
@@ -40,26 +46,29 @@ def create_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetri
     sikepo_rekam_chain = create_sikepo_rekam_chain(CONTEXTUALIZE_Q_PROMPT_SIKEPO, QA_SYSTEM_PROMPT_KETENTUAN_SIKEPO, REKAM_JEJAK_CONTEXT, retriever_sikepo_rekam, graph_chain, llm_model)
 
     question_router = question_router_chain(llm_model, ROUTER_PROMPT)
+    general_chain = PromptTemplate.from_template(
+    """Answer 'Saya tidak tahu' """
+    ) | llm_model | StrOutputParser()
 
-    # ketentuan_chain =   routing_ketentuan_chain(ojk_chain, llm_model) | RunnableBranch(
-    #                         (lambda x: "YES" in x["is_answered"], {"answer": itemgetter("answer")} | RunnablePassthrough()),
-    #                         (lambda x: "NO" in x["is_answered"], routing_ketentuan_chain(bi_chain, llm_model) | RunnableBranch(
-    #                             (lambda x: "YES" in x["is_answered"], {"answer": itemgetter("answer")} | RunnablePassthrough()),
-    #                             (lambda x: "NO" in x["is_answered"], routing_ketentuan_chain(sikepo_ketentuan_chain, llm_model)),
-    #                             {"answer": "no answer"},
-    #                         )),
-    #                         {"answer": "no answer"},
+    ketentuan_chain =   routing_ketentuan_chain(ojk_chain, llm_model) | RunnableBranch(
+                            (lambda x: "YES" in x["is_answered"], {"answer": itemgetter("answer")} | RunnablePassthrough()),
+                            (lambda x: "NO" in x["is_answered"], routing_ketentuan_chain(bi_chain, llm_model) | RunnableBranch(
+                                (lambda x: "YES" in x["is_answered"], {"answer": itemgetter("answer")} | RunnablePassthrough()),
+                                (lambda x: "NO" in x["is_answered"], routing_ketentuan_chain(sikepo_ketentuan_chain, llm_model)),
+                                general_chain,
+                            )),
+                            general_chain,
                             
-    #                     )
+                        )
 
     full_chain = {
-        "result":question_router,
+        "result":question_router | StrOutputParser(),
         "question": itemgetter("question"),
         "chat_history" : itemgetter("chat_history")
-    } | RunnableBranch(
+    } | RunnablePassthrough() | RunnableBranch(
         (lambda x: "rekam_jejak" in x["result"], sikepo_rekam_chain),
-        (lambda x: "ketentuan_terkait" in x["result"], sikepo_rekam_chain),
-        {"answer": "no answer"},
+        (lambda x: "ketentuan_terkait" in x["result"], ketentuan_chain),
+        general_chain,
     )
 
     return full_chain

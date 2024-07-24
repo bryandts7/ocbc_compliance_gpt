@@ -17,8 +17,8 @@ class RouteQuery(BaseModel):
         description="Given a user question choose which datasource would be most relevant for answering their question",
     )
 
-    def get_string(route):
-        return route.datasource
+def get_string_routing(route):
+    return route.datasource
     
 
 # Query of answering
@@ -31,7 +31,7 @@ class RouteQueryAnswer(BaseModel):
     )
 
 
-def get_string(route):
+def get_string_answer(route):
         return route.decision
 
 # Router chain
@@ -48,14 +48,22 @@ def question_router_chain(llm_model: BaseLanguageModel, ROUTING_PROMPT: str = RO
     )
 
     # Define router 
-    router = prompt | structured_llm | RunnableLambda(get_string)
+    router = prompt | structured_llm | RunnableLambda(get_string_routing)
     return router
 
-def ketentuan_router_chain(llm_model: BaseLanguageModel, QUESTION: str, RESPONSE:str, ROUTING_PROMPT: str = KETENTUAN_ANSWERING_PROMPT):
+def ketentuan_router_chain(llm_model: BaseLanguageModel, ROUTING_PROMPT: str = KETENTUAN_ANSWERING_PROMPT):
     llm = llm_model
-    structured_llm = llm.with_structured_output(RouteQuery)
-    prompt = ROUTING_PROMPT.format(question=QUESTION, response=RESPONSE)
+    structured_llm = llm.with_structured_output(RouteQueryAnswer)
+    system = ROUTING_PROMPT
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", system),
+            # MessagesPlaceholder(variable_name="history"),
+            ("human", "{question}"),
+            ("ai", "{answer}")
+        ]   
+    )
 
     # Define router 
-    router = structured_llm | RunnableLambda(get_string)
-    return router.invoke(prompt)
+    router = prompt | structured_llm | RunnableLambda(get_string_answer)
+    return router

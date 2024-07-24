@@ -30,20 +30,20 @@ def lotr_sikepo(vector_store: VectorStore, llm_model:BaseLanguageModel, embed_mo
     bm25_retriever = bm25_retriever_sikepo() # ini fungsinya belom di define yee, jadi gak bisa dipanggil, define di `retriver/retriever_sikepo/bm25_retriever_sikepo.py
 
     try:
-        lotr = MergerRetriever(retrievers=[retriever_mmr, retriever_similarity, self_query_retriever])
+        lotr = MergerRetriever(retrievers=[retriever_mmr, retriever_similarity])
     except:
         lotr = MergerRetriever(retrievers=[retriever_mmr, retriever_similarity, bm25_retriever])
 
      # remove redundant documents
     filter = EmbeddingsRedundantFilter(embeddings=embed_model)
-    filter_ordered_by_retriever = EmbeddingsClusteringFilter(
-        embeddings=embed_model,
-        num_clusters=10,
-        num_closest=1,
-        sorted=True,
-    )
+    # filter_ordered_by_retriever = EmbeddingsClusteringFilter(
+    #     embeddings=embed_model,
+    #     num_clusters=10,
+    #     num_closest=1,
+    #     sorted=True,
+    # )
 
-    pipeline = DocumentCompressorPipeline(transformers=[filter, filter_ordered_by_retriever])
+    pipeline = DocumentCompressorPipeline(transformers=[filter])
     compression_retriever = ContextualCompressionRetriever(
         base_compressor=pipeline, base_retriever=lotr
     )
