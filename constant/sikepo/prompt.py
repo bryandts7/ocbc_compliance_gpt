@@ -9,21 +9,21 @@ Criteria: If the user question asks for detailed explanations, meanings of the r
 Action: Return 'ketentuan_terkait'.
 """
 
-RAG_FUSION_PROMPT = """\
-You are a helpful assistant that generates 2 search queries based on a single input query. \n
-Generate 2 search queries related to: {question} \n
+CONTEXTUALIZE_Q_PROMPT_STR = """Given the following conversation and a follow-up question, \
+rephrase the follow-up question to be a standalone question in its original language. 
+If the follow-up question is not clear, indicate so. 
+If the chat history is not relevant to the follow-up question, please ignore the chat history.
 
-If the question context is not really clear, you can utilize this text history based 
-on prior conversation between human and AI before this question being asked:
-{history}
+Chat History:
+{chat_history}
 
-You just need to output ONLY QUERIES. DO NOT WRITE INDEXING OR ANY OTHER NOTES. The output template is like this:
-{{Original Query}}
-{{Paraphrased Query}}
-{{Paraphrased Query}}
-Output (1 ORIGINAL QUERY AND 2 PARAPHRASED QUERIES):"""
+Follow-up Question: {question}
+Standalone Question: """
 
-RAG_PROMPT = (
+QA_SYSTEM_PROMPT_KETENTUAN_STR = (
+    "The context information is below."
+    "Context: {context} \n"
+
     "You are an assistant for question-answering tasks. "
     "Use the following pieces of retrieved context to answer "
     "the question. If you don't know the answer, say that you "
@@ -32,24 +32,18 @@ RAG_PROMPT = (
     "Use three (3) sentences maximum and keep the answer concise."
     "Please write your answer ONLY in INDONESIAN."
 
-    # "Jika sebuah peraturan A mencabut atau mengubah peraturan B, C, D"
-    # "maka peraturan B, C, D tersebut mungkin saja sudah tidak berlaku"
-    
-    # "Jika ada yang bertanya mengenai aturan masih berlaku atau masih relevan, "
-    # "jawab 'Iya' ketika peraturan tersebut tidak diubah dan tidak dicabut peraturan lain dan jelaskan mengapa demikian."
-    # "Sebaliknya, jawab 'Mungkin tidak berlaku' ketika ada peraturan lain yang mengubah atau mencabut peraturan tersebut. "
-    # "Tambahkan peraturan apa yang mencabut atau mengubah jika jawaban nya 'Mungkin tidak berlaku' "
     "Jika pertanyaan menanyakan tentang peraturan, tulis dengan detail nomor ketentuan dan ketentuannya secara detail"
     "Jika konteks yang diberikan tidak relevan dengan pertanyaan, jangan pernah membuat jawaban dari pengetahuanmu sendiri"
     "Jawab kalau anda tidak tahu jika konteks yang diberikan tidak sesuai dengan pertanyaan."
+
+    "Please also mention the 'Nomor Ketentuan' and 'Ketentuan' from the metadata in a subtle way "
+    "such that you can add more context to answer the question. "
+    "\n"
     
-    # "Please also mention the 'Nomor Ketentuan' and 'Ketentuan' from the metadata in a subtle way "
-    # "such that you can add more context to answer the question. "
-    "\n\n"
-    "{context}"
+    "Question: {question}"
 )
 
-RAG_REKAM_JEJAK_PROMPT = (
+REKAM_JEJAK_CONTEXT = (
     "You will be provided with two sources of context: one from GraphRAG and one from RAG (which contains several Documents)."
     "Your task is to combine the results from these two contexts effectively. However, prioritize the context from GraphRAG if it is not empty."
     "If the context from GraphRAG is empty, then you should retrieve fully from the context provided by RAG."

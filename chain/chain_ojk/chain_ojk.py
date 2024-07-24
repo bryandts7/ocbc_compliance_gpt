@@ -3,19 +3,11 @@
 
 import json
 from operator import itemgetter
-from databases.chat_store import MongoDBChatStore
-from databases.chat_store import RedisChatStore
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_core.runnables import (
-    ConfigurableFieldSpec,
-    RunnablePassthrough,
-)
+from langchain_core.runnables import RunnablePassthrough
 from langchain_core.retrievers import BaseRetriever
-from langchain_core.runnables.history import RunnableWithMessageHistory
 from utils.models import ModelName
-from typing import Union
-
 
 # ===== formatting functions =====
 def _format_metadata(metadata):
