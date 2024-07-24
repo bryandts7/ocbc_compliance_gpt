@@ -57,15 +57,15 @@ class RedisIndexManager(VectorIndexManager):
                 idx = int(f.read())
                 start_split_idx = idx
             if start_split_idx < batch_size:
-                start_split_idx = batch_size
+                start_split_idx = 0
             print(f"Start loading from idx: {idx}")
         else:
             # crreate log file
             with open(os.path.join(log_path, 'start_store_idx_' + self.index_name + '.txt'), 'w') as f:
                 f.write(str(0))
-            start_split_idx = batch_size
+            start_split_idx = 0
 
-        if start_split_idx <= batch_size:
+        if start_split_idx < batch_size:
             self.vector_store = Redis.from_documents(
                 documents=docs[0:batch_size],
                 embedding=self.embed_model,
@@ -84,6 +84,7 @@ class RedisIndexManager(VectorIndexManager):
                 with open(os.path.join(log_path, 'start_store_idx_' + self.index_name + '.txt'), 'w') as f:
                     f.write(str(batch_size))
                 print(f"Loaded 1-{batch_size} documents")
+            start_split_idx = batch_size
         
             self.vector_store.write_schema('./databases/redis_schema/vectorstore_redis_schema_' + self.index_name + '.yaml')
         else:
