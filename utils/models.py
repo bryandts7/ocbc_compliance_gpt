@@ -39,7 +39,7 @@ def get_azure_openai_models(azure_endpoint: str, azure_deployment: str, api_vers
     )
     embedding_llm = AzureOpenAIEmbeddings(
         azure_endpoint=azure_endpoint,
-        azure_deployment='embedding-ada-crayon',
+        azure_deployment='embedding-3-small',
         api_key=api_key,
         api_version=api_version,
     )

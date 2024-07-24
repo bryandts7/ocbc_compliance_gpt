@@ -60,7 +60,7 @@ def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, e
     vectorstore=vector_store,
     document_contents=document_content_description,
     metadata_field_info=metadata_field_info,
-    enable_limit=True,
+    enable_limit=False,
     search_type="similarity",
     search_kwargs={"k": top_k},
     )
@@ -70,7 +70,7 @@ def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, e
     vectorstore=vector_store,
     document_contents=document_content_description,
     metadata_field_info=metadata_field_info,
-    enable_limit=True,
+    enable_limit=False,
     search_type="mmr",
     search_kwargs={"k": top_k},
     )
