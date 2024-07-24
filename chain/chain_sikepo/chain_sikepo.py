@@ -14,7 +14,7 @@ def create_sikepo_ketentuan_chain(contextualize_q_prompt_str: str, qa_system_pro
     _inputs_question = CONTEXTUALIZE_Q_PROMPT | llm_model | StrOutputParser()
     _context_chain = _inputs_question | {
         "context": retriever,
-        "question": itemgetter("question")
+        "question": RunnablePassthrough()
     }
     conversational_qa_with_context_chain = (
         _context_chain
@@ -38,8 +38,8 @@ def create_sikepo_rekam_chain(contextualize_q_prompt_str: str, qa_system_prompt_
     _inputs_question = CONTEXTUALIZE_Q_PROMPT | llm_model | StrOutputParser()
     _parallel_runnable = RunnableParallel(unstructured=retriever, structured=graph_chain)
     _context_chain = _inputs_question | {
-        "question": itemgetter("question"),
-        "query": itemgetter("question")
+        "question": RunnablePassthrough(),
+        "query": RunnablePassthrough()
     } | {
         "context": _parallel_runnable | CONTEXT_PROMPT,
         "question": itemgetter("question")
@@ -50,7 +50,7 @@ def create_sikepo_rekam_chain(contextualize_q_prompt_str: str, qa_system_prompt_
             "rewrited question": itemgetter("question"),
             "answer": QA_PROMPT | llm_model | StrOutputParser(),
             "context": itemgetter("context"),
-        }
+        } | RunnablePassthrough()
     )
     return conversational_qa_with_context_chain
 

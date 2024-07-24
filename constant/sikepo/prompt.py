@@ -13,8 +13,6 @@ KETENTUAN_ANSWERING_PROMPT =  """\
 You are an expert at routing an LLM Response. Determine if the response answers the question.
 Respond with 'YES' if it answers the question and 'NO' if it does not.
 
-Question: {question}
-Response: {response}
 Does the response answer the question? (YES/NO):
 
 """

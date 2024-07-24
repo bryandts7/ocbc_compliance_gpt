@@ -33,6 +33,8 @@ Source: [metadata['regulation_number']](metadata['file_url#page=metadata['page_n
 
 DO NOT PROVIDE AMBIGUOUS ANSWERS.
 DO NOT ANSWER THE QUESTION THAT IS NOT RELATED TO THE CONTEXT.
+Jawab kalau anda tidak tahu jika konteks yang diberikan tidak sesuai dengan pertanyaan.
+
 
 Question: {question}
 """
