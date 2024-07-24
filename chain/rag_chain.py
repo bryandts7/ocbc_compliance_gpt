@@ -1,44 +1,68 @@
 # INI HANYA UNTUK OJK SAJA, NANTI BUAT LAGI DI rag_chain.py
 # ISI SEMUA PIPELINE CHAIN NYA, DARI INPUT ROUTING, PROMPT, SAMPAI OUTPUT CHAIN NYA
-
-import json
+import os
 from operator import itemgetter
 from databases.chat_store import MongoDBChatStore
 from databases.chat_store import RedisChatStore
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_core.runnables import (
-    ConfigurableFieldSpec,
-    RunnablePassthrough,
-)
+from langchain_core.runnables import ConfigurableFieldSpec, RunnablePassthrough, RunnableLambda, RunnableBranch
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from utils.models import ModelName
 from typing import Union
 from langchain_core.runnables.base import Runnable
+from langchain.chains.graph_qa.cypher import GraphCypherQAChain
 
-
+from chain.chain_routing import question_router_chain, ketentuan_router_chain
 from chain.chain_ojk.chain_ojk import create_ojk_chain
+from chain.chain_sikepo.chain_sikepo import create_sikepo_ketentuan_chain, create_sikepo_rekam_chain
 
-# ===== formatting functions =====
-def _format_metadata(metadata):
-    """Remove filename from metadata."""
-    # check if file_name is in metadata, if so remove it
-    if "file_name" in metadata:
-        metadata.pop("file_name", None)
-    return metadata
+from constant.sikepo.prompt import CONTEXTUALIZE_Q_PROMPT_SIKEPO, QA_SYSTEM_PROMPT_KETENTUAN_SIKEPO, ROUTER_PROMPT, REKAM_JEJAK_CONTEXT, KETENTUAN_ANSWERING_PROMPT
+from constant.ojk.prompt import CONTEXTUALIZE_Q_PROMPT_OJK, QA_SYSTEM_PROMPT_OJK
 
 
-def _combine_documents(docs):
-    """Combine documents into a single JSON string."""
-    doc_list = [{"metadata": _format_metadata(
-        doc.metadata), "page_content": doc.page_content} for doc in docs]
-    return json.dumps(doc_list, indent=2)
+def routing_ketentuan_chain(chain, llm_model):
+    result_chain =  RunnablePassthrough() | {
+                       "question": itemgetter("question"), 
+                        "answer": chain
+                    } | { 
+                        "question": itemgetter("question"),
+                        "answer": itemgetter("answer"),
+                        "is_answered": ketentuan_router_chain(llm_model, itemgetter("question"), itemgetter("answer"), KETENTUAN_ANSWERING_PROMPT)
+                    } | RunnablePassthrough()
+    return result_chain
 
 
-def create_chain(contextualize_q_prompt_str: str, qa_system_prompt_str: str, retriever: BaseRetriever, llm_model: ModelName):
-    create_chain = create_ojk_chain(contextualize_q_prompt_str, qa_system_prompt_str, retriever, llm_model)
-    return create_chain
+def create_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
+                 graph_chain:GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
+    ojk_chain = create_ojk_chain(CONTEXTUALIZE_Q_PROMPT_OJK, QA_SYSTEM_PROMPT_OJK, retriever_ojk, llm_model)
+    bi_chain = create_ojk_chain(CONTEXTUALIZE_Q_PROMPT_OJK, QA_SYSTEM_PROMPT_OJK, retriever_ojk, llm_model)
+    sikepo_ketentuan_chain =create_sikepo_ketentuan_chain(CONTEXTUALIZE_Q_PROMPT_SIKEPO, QA_SYSTEM_PROMPT_KETENTUAN_SIKEPO, retriever_sikepo_ketentuan, llm_model)
+    sikepo_rekam_chain = create_sikepo_rekam_chain(CONTEXTUALIZE_Q_PROMPT_SIKEPO, QA_SYSTEM_PROMPT_KETENTUAN_SIKEPO, REKAM_JEJAK_CONTEXT, retriever_sikepo_rekam, graph_chain, llm_model)
+
+    question_router = question_router_chain(llm_model, ROUTER_PROMPT)
+
+    # ketentuan_chain =   routing_ketentuan_chain(ojk_chain, llm_model) | RunnableBranch(
+    #                         (lambda x: "YES" in x["is_answered"], {"answer": itemgetter("answer")} | RunnablePassthrough()),
+    #                         (lambda x: "NO" in x["is_answered"], routing_ketentuan_chain(bi_chain, llm_model) | RunnableBranch(
+    #                             (lambda x: "YES" in x["is_answered"], {"answer": itemgetter("answer")} | RunnablePassthrough()),
+    #                             (lambda x: "NO" in x["is_answered"], routing_ketentuan_chain(sikepo_ketentuan_chain, llm_model)),
+    #                             {"answer": "no answer"},
+    #                         )),
+    #                         {"answer": "no answer"},
+                            
+    #                     )
+
+    full_chain = {
+        "result":question_router,
+        "question": itemgetter("question"),
+        "chat_history" : itemgetter("chat_history")
+    } | RunnableBranch(
+        (lambda x: "rekam_jejak" in x["result"], sikepo_rekam_chain),
+        (lambda x: "ketentuan_terkait" in x["result"], sikepo_rekam_chain),
+        {"answer": "no answer"},
+    )
+
+    return full_chain
 
 # ===== INI MASIH OJK AJA, NTAR GABUNGING SEMUA LOGIC CHAIN NYA DISINI =====
 def create_chain_with_chat_history(chat_store: Union[MongoDBChatStore, RedisChatStore], final_chain:Runnable):

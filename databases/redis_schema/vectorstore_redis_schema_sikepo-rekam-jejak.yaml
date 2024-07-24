@@ -1,0 +1,56 @@
+numeric:
+- name: Tanggal Ketentuan Unix
+  no_index: false
+  sortable: false
+- name: Tahun Ketentuan
+  no_index: false
+  sortable: false
+text:
+- name: Nomor Ketentuan
+  no_index: false
+  no_stem: false
+  sortable: false
+  weight: 1
+  withsuffixtrie: false
+- name: Jenis Bank
+  no_index: false
+  no_stem: false
+  sortable: false
+  weight: 1
+  withsuffixtrie: false
+- name: Kodifikasi Ketentuan
+  no_index: false
+  no_stem: false
+  sortable: false
+  weight: 1
+  withsuffixtrie: false
+- name: Jenis Ketentuan
+  no_index: false
+  no_stem: false
+  sortable: false
+  weight: 1
+  withsuffixtrie: false
+- name: Judul Ketentuan
+  no_index: false
+  no_stem: false
+  sortable: false
+  weight: 1
+  withsuffixtrie: false
+- name: Tanggal Ketentuan
+  no_index: false
+  no_stem: false
+  sortable: false
+  weight: 1
+  withsuffixtrie: false
+- name: content
+  no_index: false
+  no_stem: false
+  sortable: false
+  weight: 1
+  withsuffixtrie: false
+vector:
+- algorithm: FLAT
+  datatype: FLOAT32
+  dims: 1536
+  distance_metric: COSINE
+  name: content_vector

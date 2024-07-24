@@ -4,6 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda
 from langchain_core.language_models.base import BaseLanguageModel
 
+from constant.sikepo.prompt import ROUTER_PROMPT, KETENTUAN_ANSWERING_PROMPT
 
 # ====== CHAIN ROUTING ======
 
@@ -18,9 +19,23 @@ class RouteQuery(BaseModel):
 
     def get_string(route):
         return route.datasource
+    
+
+# Query of answering
+class RouteQueryAnswer(BaseModel):
+    """Route an LLM Response whether it is answering the question or not."""
+
+    decision: Literal["YES", "NO", ] = Field(
+        ...,
+        description="Given an LLM Response to the Question, choose whether the response is answering the question or NOT answering the question",
+    )
+
+
+def get_string(route):
+        return route.decision
 
 # Router chain
-def router_chain(llm_model: BaseLanguageModel, ROUTING_PROMPT: str):
+def question_router_chain(llm_model: BaseLanguageModel, ROUTING_PROMPT: str = ROUTER_PROMPT):
     llm = llm_model
     structured_llm = llm.with_structured_output(RouteQuery)
     system = ROUTING_PROMPT
@@ -33,6 +48,14 @@ def router_chain(llm_model: BaseLanguageModel, ROUTING_PROMPT: str):
     )
 
     # Define router 
-    router = prompt | structured_llm | RunnableLambda(RouteQuery.get_string)
-
+    router = prompt | structured_llm | RunnableLambda(get_string)
     return router
+
+def ketentuan_router_chain(llm_model: BaseLanguageModel, QUESTION: str, RESPONSE:str, ROUTING_PROMPT: str = KETENTUAN_ANSWERING_PROMPT):
+    llm = llm_model
+    structured_llm = llm.with_structured_output(RouteQuery)
+    prompt = ROUTING_PROMPT.format(question=QUESTION, response=RESPONSE)
+
+    # Define router 
+    router = structured_llm | RunnableLambda(get_string)
+    return router.invoke(prompt)
