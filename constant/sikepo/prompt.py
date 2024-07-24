@@ -9,7 +9,17 @@ Criteria: If the user question asks for detailed explanations, meanings of the r
 Action: Return 'ketentuan_terkait'.
 """
 
-CONTEXTUALIZE_Q_PROMPT_STR = """Given the following conversation and a follow-up question, \
+KETENTUAN_ANSWERING_PROMPT =  """\
+You are an expert at routing an LLM Response. Determine if the response answers the question.
+Respond with 'YES' if it answers the question and 'NO' if it does not.
+
+Question: {question}
+Response: {response}
+Does the response answer the question? (YES/NO):
+
+"""
+
+CONTEXTUALIZE_Q_PROMPT_SIKEPO = """Given the following conversation and a follow-up question, \
 rephrase the follow-up question to be a standalone question in its original language. 
 If the follow-up question is not clear, indicate so. 
 If the chat history is not relevant to the follow-up question, please ignore the chat history.
@@ -20,7 +30,7 @@ Chat History:
 Follow-up Question: {question}
 Standalone Question: """
 
-QA_SYSTEM_PROMPT_KETENTUAN_STR = (
+QA_SYSTEM_PROMPT_KETENTUAN_SIKEPO = (
     "The context information is below."
     "Context: {context} \n"
 

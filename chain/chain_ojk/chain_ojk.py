@@ -35,7 +35,7 @@ def create_ojk_chain(contextualize_q_prompt_str: str, qa_system_prompt_str: str,
     _inputs_question = CONTEXTUALIZE_Q_PROMPT | llm_model | StrOutputParser()
     _context_chain = _inputs_question | {
         "context": retriever | _combine_documents,
-        "question": RunnablePassthrough()
+        "question": itemgetter("question")
     }
     conversational_qa_with_context_chain = (
         _context_chain

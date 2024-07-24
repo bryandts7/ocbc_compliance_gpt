@@ -20,7 +20,7 @@ def get_openai_models(api_key: str):
         api_key=api_key,
         temperature=0.0,
         verbose=True,
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
     )
     embedding_llm = OpenAIEmbeddings(
         api_key=api_key,
