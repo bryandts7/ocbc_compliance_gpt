@@ -25,7 +25,7 @@ including the regulation number and file URL if available:
 [Your answer here] \n\n
 Source: [metadata['regulation_number']](metadata['file_url'])
 
-If you cannot find the regulation number, just provide the (Answer...). 
+If you cannot find the regulation number, just provide the answer. 
 If the file_url ends with '.pdf', you can add the metadata['page_number'] in the URL like this: 
 
 [Your answer here] \n\n

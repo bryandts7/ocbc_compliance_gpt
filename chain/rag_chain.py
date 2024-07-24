@@ -53,7 +53,6 @@ def create_chain_with_chat_history(chat_store: Union[MongoDBChatStore, RedisChat
     )
     return final_chain
 
-
 # ===== GET RESPONSE =====
 
 def get_response(question: str, chain, user_id: str, conversation_id: str):
