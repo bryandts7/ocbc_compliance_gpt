@@ -1,0 +1,9 @@
+.vscode/
+.idea/
+temp_notebook/
+main_develop.ipynb
+data/
+__pycache__/
+.streamlit/
+.devcontainer/
+.env
