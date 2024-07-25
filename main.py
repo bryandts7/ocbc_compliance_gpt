@@ -57,3 +57,4 @@ async def stream():
             await asyncio.sleep(0.1)
 
     return StreamingResponse(message_stream(), media_type='text/event-stream')
+
