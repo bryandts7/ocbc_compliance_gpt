@@ -14,6 +14,11 @@ def get_config():
     cohere_api_key = os.getenv("COHERE_API_KEY")
     mongo_uri = os.getenv("MONGO_URI")
     redis_uri = os.getenv("REDIS_URI")
+    neo4j_uri = os.getenv("NEO4J_GRAPH_URL")
+    neo4j_username = os.getenv("NEO4J_USERNAME")
+    neo4j_password = os.getenv("NEO4J_PASSWORD")
+    neo4j_db = os.getenv("NEO4J_DATABASE")
+
 
     config_openai = {
         'api_key': openai_api_key,
@@ -32,7 +37,11 @@ def get_config():
         "pinecone_api_key": pinecone_api_key,
         "cohere_api_key": cohere_api_key,
         "mongo_uri": mongo_uri,
-        "redis_uri": redis_uri
+        "redis_uri": redis_uri,
+        "neo4j_uri": neo4j_uri,
+        "neo4j_username": neo4j_username,
+        "neo4j_password": neo4j_password,
+        "neo4j_db": neo4j_db
     }
 
 # for deployment
@@ -47,6 +56,10 @@ def get_config_streamlit():
     cohere_api_key = st.secrets["cohere_api_key"]
     mongo_uri = st.secrets["mongo_uri"]
     redis_uri = st.secrets["redis_uri"]
+    neo4j_uri = st.secrets["neo4j_graph_url"]
+    neo4j_username = st.secrets["neo4j_username"]
+    neo4j_password = st.secrets["neo4j_password"]
+    neo4j_db = st.secrets["neo4j_database"]
 
     config_openai = {
         'api_key': openai_api_key,
@@ -65,6 +78,10 @@ def get_config_streamlit():
         "pinecone_api_key": pinecone_api_key,
         "cohere_api_key": cohere_api_key,
         "mongo_uri": mongo_uri,
-        "redis_uri": redis_uri
+        "redis_uri": redis_uri,
+        "neo4j_uri": neo4j_uri,
+        "neo4j_username": neo4j_username,
+        "neo4j_password": neo4j_password,
+        "neo4j_db": neo4j_db
     }
 

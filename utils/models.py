@@ -20,10 +20,11 @@ def get_openai_models(api_key: str):
         api_key=api_key,
         temperature=0.0,
         verbose=True,
-        model="gpt-4o-mini",
+        model="gpt-3.5-turbo",
     )
     embedding_llm = OpenAIEmbeddings(
         api_key=api_key,
+        # model="text-embedding-3-small"
     )
     return llm, embedding_llm
 
@@ -39,7 +40,8 @@ def get_azure_openai_models(azure_endpoint: str, azure_deployment: str, api_vers
     )
     embedding_llm = AzureOpenAIEmbeddings(
         azure_endpoint=azure_endpoint,
-        azure_deployment='embedding-3-small',
+        azure_deployment='embedding-ada-crayon',
+        # azure_deployment='embedding-3-small',
         api_key=api_key,
         api_version=api_version,
     )
