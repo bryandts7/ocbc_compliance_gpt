@@ -3,18 +3,30 @@
 
 import json
 from operator import itemgetter
+
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_core.runnables import RunnablePassthrough
 from langchain_core.retrievers import BaseRetriever
+from langchain_core.runnables import RunnablePassthrough
+
 from utils.models import ModelName
+
 
 # ===== formatting functions =====
 def _format_metadata(metadata):
     """Remove filename from metadata."""
     # check if file_name is in metadata, if so remove it
-    if "file_name" in metadata:
-        metadata.pop("file_name", None)
+    removed_metadata = [
+        "standardized_file_name", 
+        "standardized_extracted_file_name",
+        "file_id",
+        "file_name"
+        ]
+    
+    for attribute in removed_metadata:
+        if attribute in metadata:
+            metadata.pop(attribute, None)
+    
     return metadata
 
 
