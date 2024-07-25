@@ -1,6 +1,7 @@
-from fastapi import FastAPI, Request, Form
+from pydantic import BaseModel
+from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 from random import randint
 import queue
 import asyncio
@@ -29,16 +30,16 @@ sess_id = "W56PNA34XM"
 USER_ID = 'xmriz'
 CONVERSATION_ID = 'xmriz-2021-07-01-01'
 model_name = ModelName.AZURE_OPENAI
-llm_model, embed_model = get_model(model_name=model_name, config=config, llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_ADA)
+llm_model, embed_model = get_model(model_name=model_name, config=config, llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
 
-pinecone_ojk = PineconeIndexManager(index_name='ojk', embed_model=embed_model, config=config)
-vector_store_ojk = pinecone_ojk.load_vector_index()
+redis_ojk = RedisIndexManager(index_name='ojk', embed_model=embed_model, config=config)
+vector_store_ojk = redis_ojk.load_vector_index()
 
-pinecone_ket = PineconeIndexManager(index_name='ketentuan-terkait', embed_model=embed_model, config=config)
-vector_store_ket = pinecone_ket.load_vector_index()
+redis_ket = RedisIndexManager(index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config)
+vector_store_ket = redis_ket.load_vector_index()
 
-pinecone_rek = PineconeIndexManager(index_name='rekam-jejak', embed_model=embed_model, config=config)
-vector_store_rek = pinecone_rek.load_vector_index()
+redis_rek = RedisIndexManager(index_name='sikepo-rekam-jejak', embed_model=embed_model, config=config)
+vector_store_rek = redis_rek.load_vector_index()
 
 neo4j_sikepo = Neo4jGraphStore(config=config)
 graph = neo4j_sikepo.get_graph()
@@ -57,17 +58,28 @@ chain_history = create_chain_with_chat_history(
 )
 
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")
 
-@app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "username": USERNAME, "ai_name": AI_NAME})
+class ChatRequest(BaseModel):
+    user_input: str
+
+
+class ChatResponse(BaseModel):
+    user_message: str
+    ai_response: str
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/chat_submit/")
 async def chat_input(user_input: str = Form(...)):
     if not user_input:
         ai_response = "Error: Please Enter a Valid Input"
-        return templates.TemplateResponse("ai_response.html", {
+        return JSONResponse(content={
             "ai_name": AI_NAME,
             "ai_response": ai_response,
             "hx_swap": False,
@@ -76,6 +88,36 @@ async def chat_input(user_input: str = Form(...)):
     
     message_queue.put(user_input)
     return JSONResponse(content={"status": "Success"}, status_code=204)
+
+@app.post("/chat/", response_model=ChatResponse)
+async def chat_input(request: ChatRequest):
+    if not request.user_input:
+        raise HTTPException(
+            status_code=400, detail="Please enter a valid input")
+
+    user_message = request.user_input
+    ai_response = ""
+
+    response = get_response(
+                    chain=chain_history,
+                    question=user_message,
+                    user_id=USER_ID,
+                    conversation_id=CONVERSATION_ID
+                )
+    
+    print(response)
+    # ai_response = response['answer']['answer'].replace("\n", "<br>")
+    ai_response = response['answer'].replace("\n", "<br>")
+
+    # history.append({"user": user_message, "ai": ai_response})
+
+    return JSONResponse(
+        status_code=200,
+        content={
+            "user_message": user_message,
+            "ai_response": ai_response
+        }
+    )
 
 @app.get('/stream')
 async def stream():
@@ -108,3 +150,7 @@ async def stream():
             await asyncio.sleep(0.1)
 
     return StreamingResponse(message_stream(), media_type='text/event-stream')
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=9898)
