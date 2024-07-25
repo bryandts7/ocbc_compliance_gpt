@@ -1,4 +1,4 @@
-from utils.graph_cypher import GraphCypherQAChain
+from langchain.chains.graph_qa.cypher import GraphCypherQAChain
 from langchain_core.prompts import PromptTemplate
 from langchain_community.graphs import Neo4jGraph
 from langchain_core.language_models.base import BaseLanguageModel
