@@ -5,6 +5,7 @@ langchain
 langchain-community
 python-dotenv
 langchain_openai
+nest_asyncio
 neo4j
 numpy
 ragas
