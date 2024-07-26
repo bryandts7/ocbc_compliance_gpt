@@ -1,4 +1,4 @@
-CONTEXTUALIZE_Q_PROMPT_STR = """Given the following conversation and a follow-up question, \
+CONTEXTUALIZE_Q_PROMPT_BI = """Given the following conversation and a follow-up question, \
 rephrase the follow-up question to be a standalone question in its original language. 
 If the follow-up question is not clear, indicate so. 
 If the chat history is not relevant to the follow-up question, please ignore the chat history.
@@ -10,7 +10,7 @@ Follow-up Question: {question}
 Standalone Question: """
 
 
-QA_SYSTEM_PROMPT_STR = """The context information is below.
+QA_SYSTEM_PROMPT_BI = """The context information is below.
 Context: 
 {context}
 
