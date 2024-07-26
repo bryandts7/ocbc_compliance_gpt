@@ -5,6 +5,7 @@ langchain
 langchain-community
 python-dotenv
 langchain_openai
+nest_asyncio
 neo4j
 numpy
 ragas
@@ -14,6 +15,8 @@ lark
 pymongo
 langchain_mongodb
 motor
+fastapi
+asyncio
 pymupdf
 python-docx
 paddleocr

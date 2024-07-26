@@ -61,7 +61,7 @@ REKAM_JEJAK_CONTEXT = (
     "GraphRAG Context:"
     "{structured}"
     "You can also rely on the Documents retreived here as an additional context:"
-    "{unstructured}"
+    #"{unstructured}"
 )
 
 GRAPH_CYPHER_GEN_PROMPT = """Task:Generate Cypher statement to query a graph database.
@@ -95,9 +95,6 @@ RETURN
 
 The question is:
 {question}
-
-If the question is ambiguous like "Apakah peraturan TERSEBUT masih berlaku?", then you can use this prior conversation to retrieve what does it means by TERSEBUT:
-{history}
 """
 
 GRAPH_QA_GEN_PROMPT = """Anda adalah asisten yang mengambil hasil dari kueri Neo4j Cypher 

@@ -36,7 +36,7 @@ def create_sikepo_rekam_chain(contextualize_q_prompt_str: str, qa_system_prompt_
     CONTEXT_PROMPT = PromptTemplate(input_variables=["unstructured", "structured"], template=REKAM_JEJAK_CONTEXT)
 
     _inputs_question = CONTEXTUALIZE_Q_PROMPT | llm_model | StrOutputParser()
-    _parallel_runnable = RunnableParallel(unstructured=retriever, structured=graph_chain)
+    _parallel_runnable = RunnableParallel( structured=graph_chain)
     _context_chain = _inputs_question | {
         "question": RunnablePassthrough(),
         "query": RunnablePassthrough()
