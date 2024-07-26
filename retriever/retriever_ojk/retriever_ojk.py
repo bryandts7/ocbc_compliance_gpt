@@ -25,14 +25,12 @@ def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, e
     #     llm_model=llm_model, 
     #     vector_store=vector_store, 
     #     search_type="similarity", 
-    #     top_k=top_k
     # )
 
     # retriever_self_query_mmr = self_query_ojk(
     #     llm_model=llm_model, 
     #     vector_store=vector_store, 
     #     search_type="mmr", 
-    #     top_k=top_k
     # )
 
     retriever_similarity = vector_store.as_retriever(
