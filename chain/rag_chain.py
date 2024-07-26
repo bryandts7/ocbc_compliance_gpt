@@ -45,13 +45,7 @@ def routing_ketentuan_chain(chain, llm_model):
 def create_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
                  graph_chain:GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
     ojk_chain = create_ojk_chain(CONTEXTUALIZE_Q_PROMPT_OJK, QA_SYSTEM_PROMPT_OJK, retriever_ojk, llm_model)
-<<<<<<< HEAD
     bi_chain = create_bi_chain(CONTEXTUALIZE_Q_PROMPT_BI, QA_SYSTEM_PROMPT_BI, retriever_bi, llm_model)
-=======
-    bi_chain = create_ojk_chain(CONTEXTUALIZE_Q_PROMPT_BI, QA_SYSTEM_PROMPT_BI, retriever_bi, llm_model)
-    bi_chain = create_bi_chain(CONTEXTUALIZE_Q_PROMPT_BI, QA_SYSTEM_PROMPT_BI, retriever_bi, llm_model)
-    # bi_chain = create_ojk_chain(CONTEXTUALIZE_Q_PROMPT_OJK, QA_SYSTEM_PROMPT_OJK, retriever_ojk, llm_model)
->>>>>>> 60c3940860e8de1526588815a694eaa77d0df0ac
     sikepo_ketentuan_chain =create_sikepo_ketentuan_chain(CONTEXTUALIZE_Q_PROMPT_SIKEPO, QA_SYSTEM_PROMPT_KETENTUAN_SIKEPO, retriever_sikepo_ketentuan, llm_model)
     sikepo_rekam_chain = create_sikepo_rekam_chain(CONTEXTUALIZE_Q_PROMPT_SIKEPO, QA_SYSTEM_PROMPT_KETENTUAN_SIKEPO, REKAM_JEJAK_CONTEXT, retriever_sikepo_rekam, graph_chain, llm_model)
 

@@ -7,5 +7,5 @@ __pycache__/
 .streamlit/
 .devcontainer/
 .env
-ocbc
 env/
+ocbc
