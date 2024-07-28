@@ -6,6 +6,7 @@ import pandas as pd
 from paddleocr import PaddleOCR
 import os
 import xlrd
+import datetime
 
 # ==================== EXTRACT TEXT FROM PDF ====================
 
@@ -95,14 +96,16 @@ def extract_text_from_excel(excel_path):
 # # ==================== MAIN ====================
 
 def convert_text_to_document(metadata, text, page_number=None):
+    metadata = extract_metadata_from_dataframe(metadata)
+    metadata.pop('effective_date_id_str')
     if page_number is None:
+        metadata['page_number'] = 'NO DATA'
         return Document(
             page_content=text,
-            metadata=extract_metadata_from_dataframe(metadata)
+            metadata=metadata
         )
     else:
         page_content = text
-        metadata = extract_metadata_from_dataframe(metadata)
         metadata['page_number'] = page_number
         return Document(
             page_content=page_content,
@@ -111,21 +114,50 @@ def convert_text_to_document(metadata, text, page_number=None):
 
 
 def extract_metadata_from_dataframe(metadata):
+    # Define the mapping for Indonesian month names to their numerical values
+    month_mapping = {
+        'Januari': 1, 'Februari': 2, 'Maret': 3, 'April': 4, 'Mei': 5,
+        'Juni': 6, 'Juli': 7, 'Agustus': 8, 'September': 9, 'Oktober': 10,
+        'November': 11, 'Desember': 12
+    }
+    
+    # Extract and convert the effective_date to datetime
+    date_str = metadata['tanggal_berlaku']
+    day, month_name, year = date_str.split()
+    month = month_mapping[month_name]
+    effective_date = datetime.datetime(int(year), month, int(day))
+    
     return {
-        # "file_name": metadata['new_filename'],
         "doc_id": int(metadata['doc_id']),
         "title": metadata['title'],
         "sector": metadata['sektor'],
         "subsector": metadata['subsektor'],
         "regulation_type": metadata['jenis_regulasi'],
         "regulation_number": metadata['nomor_regulasi'],
-        "effective_date": metadata['tanggal_berlaku'],
+        "effective_date": effective_date,
+        "effective_date_id_str": date_str,
         "file_url": metadata['file_url'],
     }
 
 
+# Format metadata to string
+def format_metadata(metadata):
+    metadata.pop('doc_id')
+    metadata.pop('file_url')
+    metadata.pop('effective_date')
+    metadata['effective_date'] = metadata.pop('effective_date_id_str')
+    if 'page_number' in metadata:
+        metadata.pop('page_number')
+
+    str_metadata = f"METADATA:\n"
+    for key, value in metadata.items():
+        str_metadata += f"{key}: {value}\n"
+    str_metadata += '-'*10 + '\n\n'
+    return str_metadata
+
+
 def extract_all_documents_in_directory(documents_dir, metadata_path, treshold=0.98):
-    ocr = PaddleOCR(use_angle_cls=True, lang='id', show_log=False)
+    ocr = PaddleOCR(use_angle_cls=True, lang='id', show_log=False, use_gpu=True)
 
     docs = []
 
@@ -143,20 +175,20 @@ def extract_all_documents_in_directory(documents_dir, metadata_path, treshold=0.
             for page in text_with_page:
                 metadata_with_page = metadata.copy()
                 metadata_with_page['page_number'] = page['page_number']
-                metadata_str = "metadata=" + str(metadata_with_page) + '\n'
+                metadata_str = format_metadata(metadata_with_page)
                 document = convert_text_to_document(
                     text=metadata_str + page['text'], metadata=file_metadata, page_number=page['page_number'])
                 docs.append(document)
         elif file.endswith('.xlsm') or file.endswith('.xlsx') or file.endswith('.xls'):
-            metadata_str = "metadata=" + \
-                str(extract_metadata_from_dataframe(file_metadata)) + '\n'
+            metadata = extract_metadata_from_dataframe(file_metadata)
+            metadata_str = format_metadata(metadata)
             text = metadata_str + extract_text_from_excel(file_path) + '\n'
             document = convert_text_to_document(
                 text=text, metadata=file_metadata)
             docs.append(document)
         elif file.endswith('.docx'):
-            metadata_str = "metadata=" + \
-                str(extract_metadata_from_dataframe(file_metadata)) + '\n'
+            metadata = extract_metadata_from_dataframe(file_metadata)
+            metadata_str = format_metadata(metadata)
             text = metadata_str + extract_text_from_docx(file_path) + '\n'
             document = convert_text_to_document(
                 text=text, metadata=file_metadata)

@@ -1,6 +1,3 @@
-import gzip
-import pickle
-
 from langchain.retrievers import (ContextualCompressionRetriever,
                                   MergerRetriever)
 from langchain.retrievers.document_compressors.base import \

@@ -55,6 +55,6 @@ def create_bi_chain(contextualize_q_prompt_str: str, qa_system_prompt_str: str, 
             "rewrited question": itemgetter("question"),
             "answer": QA_PROMPT | llm_model | StrOutputParser(),
             "context": itemgetter("context"),
-        }
+        } | RunnablePassthrough()
     )
     return conversational_qa_with_context_chain

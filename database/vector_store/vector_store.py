@@ -26,6 +26,7 @@ class VectorIndexManager(ABC):
         pass
 
 
+# ================== POSTGRE ==================
 
 
 # ================== REDIS ==================
@@ -49,7 +50,7 @@ class RedisIndexManager(VectorIndexManager):
                 raise
 
     def store_vector_index(self, docs, batch_size=200):
-        log_path = './databases/store_logs'
+        log_path = './database/store_logs'
         batch_size = batch_size
 
         if os.path.exists(os.path.join(log_path, 'start_store_idx_' + self.index_name + '.txt')):
@@ -86,13 +87,13 @@ class RedisIndexManager(VectorIndexManager):
                 print(f"Loaded 1-{batch_size} documents")
             start_split_idx = batch_size
         
-            self.vector_store.write_schema('./databases/redis_schema/vectorstore_redis_schema_' + self.index_name + '.yaml')
+            self.vector_store.write_schema('./database/vector_store/redis_schema/vectorstore_redis_schema_' + self.index_name + '.yaml')
         else:
             self.vector_store = Redis.from_existing_index(
                 index_name=self.index_name, 
                 redis_url=self.redis_uri, 
                 embedding=self.embed_model,
-                schema="./databases/redis_schema/vectorstore_redis_schema_" + self.index_name + '.yaml',
+                schema="./database/vector_store/redis_schema/vectorstore_redis_schema_" + self.index_name + '.yaml',
             )
 
         for i in range(start_split_idx, len(docs), batch_size):
@@ -109,7 +110,7 @@ class RedisIndexManager(VectorIndexManager):
             index_name=self.index_name, 
             redis_url=self.redis_uri, 
             embedding=self.embed_model,
-            schema="./databases/redis_schema/vectorstore_redis_schema_" + self.index_name + '.yaml',
+            schema="./database/vector_store/redis_schema/vectorstore_redis_schema_" + self.index_name + '.yaml',
         )
         return self.vector_store
 
