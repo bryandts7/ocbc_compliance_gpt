@@ -17,18 +17,7 @@ Does the response answer the question? (YES/NO):
 
 """
 
-CONTEXTUALIZE_Q_PROMPT_SIKEPO = """Given the following conversation and a follow-up question, \
-rephrase the follow-up question to be a standalone question in its original language. 
-If the follow-up question is not clear, indicate so. 
-If the chat history is not relevant to the follow-up question, please ignore the chat history.
-
-Chat History:
-{chat_history}
-
-Follow-up Question: {question}
-Standalone Question: """
-
-QA_SYSTEM_PROMPT_KETENTUAN_SIKEPO = (
+QA_SYSTEM_PROMPT_SIKEPO = (
     "The context information is below."
     "Context: {context} \n"
 
