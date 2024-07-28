@@ -6,38 +6,32 @@ from langchain_core.retrievers import BaseRetriever
 from utils.models import ModelName
 from langchain.chains.graph_qa.cypher import GraphCypherQAChain
 
-def create_sikepo_ketentuan_chain(contextualize_q_prompt_str: str, qa_system_prompt_str: str, retriever: BaseRetriever, llm_model: ModelName):
-    CONTEXTUALIZE_Q_PROMPT_STR = contextualize_q_prompt_str
-    QA_SYSTEM_PROMPT_KETENTUAN_STR = qa_system_prompt_str
-    CONTEXTUALIZE_Q_PROMPT = PromptTemplate.from_template(CONTEXTUALIZE_Q_PROMPT_STR)
-    QA_PROMPT = ChatPromptTemplate.from_template(QA_SYSTEM_PROMPT_KETENTUAN_STR)
-    _inputs_question = CONTEXTUALIZE_Q_PROMPT | llm_model | StrOutputParser()
-    _context_chain = _inputs_question | {
+def create_sikepo_ketentuan_chain(qa_system_prompt_str: str, retriever: BaseRetriever, llm_model: ModelName):
+    _context_chain = RunnablePassthrough() | itemgetter("question") | {
         "context": retriever,
         "question": RunnablePassthrough()
     }
+    QA_SYSTEM_PROMPT_STR = qa_system_prompt_str
+    QA_PROMPT = ChatPromptTemplate.from_template(QA_SYSTEM_PROMPT_STR)
     conversational_qa_with_context_chain = (
         _context_chain
         | {
             "rewrited question": itemgetter("question"),
             "answer": QA_PROMPT | llm_model | StrOutputParser(),
             "context": itemgetter("context"),
-        }
+        } | RunnablePassthrough()
     )
     return conversational_qa_with_context_chain
 
 
-def create_sikepo_rekam_chain(contextualize_q_prompt_str: str, qa_system_prompt_str: str, rekam_jejak_context:str, retriever: BaseRetriever, graph_chain:GraphCypherQAChain, llm_model: ModelName):
-    CONTEXTUALIZE_Q_PROMPT_STR = contextualize_q_prompt_str
+def create_sikepo_rekam_chain(qa_system_prompt_str: str, rekam_jejak_context:str, retriever: BaseRetriever, graph_chain:GraphCypherQAChain, llm_model: ModelName):
     QA_SYSTEM_PROMPT_REKAM_STR = qa_system_prompt_str
     REKAM_JEJAK_CONTEXT = rekam_jejak_context
-    CONTEXTUALIZE_Q_PROMPT = PromptTemplate.from_template(CONTEXTUALIZE_Q_PROMPT_STR)
     QA_PROMPT = ChatPromptTemplate.from_template(QA_SYSTEM_PROMPT_REKAM_STR)
     CONTEXT_PROMPT = PromptTemplate(input_variables=["unstructured", "structured"], template=REKAM_JEJAK_CONTEXT)
 
-    _inputs_question = CONTEXTUALIZE_Q_PROMPT | llm_model | StrOutputParser()
-    _parallel_runnable = RunnableParallel( structured=graph_chain)
-    _context_chain = _inputs_question | {
+    _parallel_runnable = RunnableParallel(structured=graph_chain)
+    _context_chain = RunnablePassthrough() | itemgetter("question") | {
         "question": RunnablePassthrough(),
         "query": RunnablePassthrough()
     } | {

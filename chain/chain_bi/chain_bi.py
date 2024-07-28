@@ -38,17 +38,13 @@ def _combine_documents(docs):
 
 
 # ===== INI MASIH BI AJA, NTAR GABUNGING SEMUA LOGIC CHAIN NYA DISINI =====
-def create_bi_chain(contextualize_q_prompt_str: str, qa_system_prompt_str: str, retriever: BaseRetriever, llm_model: ModelName):
-    CONTEXTUALIZE_Q_PROMPT_STR = contextualize_q_prompt_str
-    QA_SYSTEM_PROMPT_STR = qa_system_prompt_str
-    QA_PROMPT = ChatPromptTemplate.from_template(QA_SYSTEM_PROMPT_STR)
-    CONTEXTUALIZE_Q_PROMPT = PromptTemplate.from_template(
-        CONTEXTUALIZE_Q_PROMPT_STR)
-    _inputs_question = CONTEXTUALIZE_Q_PROMPT | llm_model | StrOutputParser()
-    _context_chain = _inputs_question | {
+def create_bi_chain(qa_system_prompt_str: str, retriever: BaseRetriever, llm_model: ModelName):
+    _context_chain = RunnablePassthrough() | itemgetter("question") | {
         "context": retriever | _combine_documents,
         "question": RunnablePassthrough()
     }
+    QA_SYSTEM_PROMPT_STR = qa_system_prompt_str
+    QA_PROMPT = ChatPromptTemplate.from_template(QA_SYSTEM_PROMPT_STR)
     conversational_qa_with_context_chain = (
         _context_chain
         | {
