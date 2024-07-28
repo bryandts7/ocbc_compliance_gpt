@@ -1,9 +1,6 @@
-# INI HANYA UNTUK OJK SAJA, NANTI BUAT LAGI DI rag_chain.py
-# ISI SEMUA PIPELINE CHAIN NYA, DARI INPUT ROUTING, PROMPT, SAMPAI OUTPUT CHAIN NYA
-import os
 from operator import itemgetter
-from databases.chat_store import MongoDBChatStore
-from databases.chat_store import RedisChatStore
+from database.chat_store import MongoDBChatStore
+from database.chat_store import RedisChatStore
 from langchain_core.runnables import ConfigurableFieldSpec, RunnablePassthrough, RunnableLambda, RunnableBranch
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables.history import RunnableWithMessageHistory
@@ -31,27 +28,21 @@ def routing_ketentuan_chain(chain, llm_model):
     question_router = ketentuan_router_chain(llm_model, KETENTUAN_ANSWERING_PROMPT)
     result_chain =  RunnablePassthrough() | {
                         "question": itemgetter("question"), 
-                        "answer": chain | itemgetter("answer"),
+                        "answer": chain,
                         "chat_history" : itemgetter("chat_history")
                      } | { 
                          "question": itemgetter("question"),
                          "answer": itemgetter("answer"),
                          "is_answered": question_router,
-                         "chat_history" : itemgetter("chat_history")}
-                    # } | RunnablePassthrough()
+                         "chat_history" : itemgetter("chat_history")
+                    } | RunnablePassthrough()
     return result_chain
 
 
 def create_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
                  graph_chain:GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
     ojk_chain = create_ojk_chain(CONTEXTUALIZE_Q_PROMPT_OJK, QA_SYSTEM_PROMPT_OJK, retriever_ojk, llm_model)
-<<<<<<< HEAD
     bi_chain = create_bi_chain(CONTEXTUALIZE_Q_PROMPT_BI, QA_SYSTEM_PROMPT_BI, retriever_bi, llm_model)
-=======
-    bi_chain = create_ojk_chain(CONTEXTUALIZE_Q_PROMPT_BI, QA_SYSTEM_PROMPT_BI, retriever_bi, llm_model)
-    bi_chain = create_bi_chain(CONTEXTUALIZE_Q_PROMPT_BI, QA_SYSTEM_PROMPT_BI, retriever_bi, llm_model)
-    # bi_chain = create_ojk_chain(CONTEXTUALIZE_Q_PROMPT_OJK, QA_SYSTEM_PROMPT_OJK, retriever_ojk, llm_model)
->>>>>>> 60c3940860e8de1526588815a694eaa77d0df0ac
     sikepo_ketentuan_chain =create_sikepo_ketentuan_chain(CONTEXTUALIZE_Q_PROMPT_SIKEPO, QA_SYSTEM_PROMPT_KETENTUAN_SIKEPO, retriever_sikepo_ketentuan, llm_model)
     sikepo_rekam_chain = create_sikepo_rekam_chain(CONTEXTUALIZE_Q_PROMPT_SIKEPO, QA_SYSTEM_PROMPT_KETENTUAN_SIKEPO, REKAM_JEJAK_CONTEXT, retriever_sikepo_rekam, graph_chain, llm_model)
 
@@ -61,10 +52,10 @@ def create_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetri
     ) | llm_model | StrOutputParser()
 
     ketentuan_chain =   routing_ketentuan_chain(ojk_chain, llm_model) | RunnableBranch(
-                            (lambda x: "YES" in x["is_answered"], {"answer": itemgetter("answer")} | RunnablePassthrough()),
+                            (lambda x: "YES" in x["is_answered"], itemgetter("answer") | RunnablePassthrough()),
                             (lambda x: "NO" in x["is_answered"], routing_ketentuan_chain(bi_chain, llm_model) | RunnableBranch(
-                                (lambda x: "YES" in x["is_answered"], {"answer": itemgetter("answer")} | RunnablePassthrough()),
-                                (lambda x: "NO" in x["is_answered"], routing_ketentuan_chain(sikepo_ketentuan_chain, llm_model)),
+                                (lambda x: "YES" in x["is_answered"], itemgetter("answer") | RunnablePassthrough()),
+                                (lambda x: "NO" in x["is_answered"], routing_ketentuan_chain(sikepo_ketentuan_chain, llm_model) | itemgetter("answer") | RunnablePassthrough()),
                                 general_chain,
                             )),
                             general_chain,
