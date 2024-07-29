@@ -70,7 +70,6 @@ def self_query_ojk(llm_model: BaseLanguageModel, vector_store: VectorStore, sear
         document_contents=document_content_description,
         attribute_info=metadata_field_info,
         schema_prompt=schema_prompt,
-
     )
     output_parser = StructuredQueryOutputParser.from_components()
     query_constructor = prompt | llm_model | output_parser

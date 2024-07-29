@@ -1,12 +1,20 @@
 from abc import ABC, abstractmethod
+<<<<<<< HEAD
 import time
 from langchain_core.embeddings import Embeddings
+=======
+from enum import Enum
+import time
+>>>>>>> 1f9e654e2ab738f8c54e720c222d37dd1745fdf9
 
 from pinecone import Pinecone, ServerlessSpec
 from langchain_pinecone import PineconeVectorStore
 
+<<<<<<< HEAD
 from langchain_community.vectorstores import PGVector
 
+=======
+>>>>>>> 1f9e654e2ab738f8c54e720c222d37dd1745fdf9
 from langchain_community.vectorstores.redis import Redis
 import redis
 
@@ -20,10 +28,13 @@ class VectorIndexManager(ABC):
         self.vector_store = None
 
     @abstractmethod
+<<<<<<< HEAD
     def delete_index(self):
         pass
 
     @abstractmethod
+=======
+>>>>>>> 1f9e654e2ab738f8c54e720c222d37dd1745fdf9
     def store_vector_index(self, docs=None, delete=False):
         pass
 
@@ -33,6 +44,7 @@ class VectorIndexManager(ABC):
 
 
 # ================== POSTGRE ==================
+<<<<<<< HEAD
 class PostgresIndexManager(VectorIndexManager):
     def __init__(self, embed_model: Embeddings, index_name: str = "ojk", config: dict = {}):
         super().__init__(embed_model, index_name)
@@ -102,11 +114,17 @@ class PostgresIndexManager(VectorIndexManager):
         )
         return self.vector_store
 
+=======
+>>>>>>> 1f9e654e2ab738f8c54e720c222d37dd1745fdf9
 
 
 # ================== REDIS ==================
 class RedisIndexManager(VectorIndexManager):
+<<<<<<< HEAD
     def __init__(self, embed_model: Embeddings, index_name="ojk", config: dict = {}, db_id: int = 0):
+=======
+    def __init__(self, embed_model, index_name="ojk", config: dict = {}, db_id: int = 0):
+>>>>>>> 1f9e654e2ab738f8c54e720c222d37dd1745fdf9
         super().__init__(embed_model, index_name)
         self.redis_uri = config["redis_uri"] + "/" + str(db_id)
         self.redis_client = redis.from_url(self.redis_uri)
@@ -193,14 +211,22 @@ class RedisIndexManager(VectorIndexManager):
 
 # ================== PINECONE ==================
 class PineconeIndexManager(VectorIndexManager):
+<<<<<<< HEAD
     def __init__(self, embed_model: Embeddings, index_name="ojk", config: dict = {}):
+=======
+    def __init__(self, embed_model, index_name="ojk", config: dict = {}):
+>>>>>>> 1f9e654e2ab738f8c54e720c222d37dd1745fdf9
         super().__init__(embed_model, index_name)
         self.api_key = config["pinecone_api_key"]
         self.pc = Pinecone(api_key=self.api_key)
         self._create_index_if_not_exists()
         self.index = self.pc.Index(self.index_name)
 
+<<<<<<< HEAD
     def delete_index(self):
+=======
+    def delete_all(self):
+>>>>>>> 1f9e654e2ab738f8c54e720c222d37dd1745fdf9
         self.index.delete(delete_all=True)
         print("Deleted all keys in the database.")
 
