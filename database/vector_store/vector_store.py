@@ -5,7 +5,10 @@ from langchain_core.embeddings import Embeddings
 from pinecone import Pinecone, ServerlessSpec
 from langchain_pinecone import PineconeVectorStore
 
+import psycopg2
 from langchain_community.vectorstores import PGVector
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+
 
 from langchain_community.vectorstores.redis import Redis
 import redis
@@ -36,10 +39,46 @@ class VectorIndexManager(ABC):
 class PostgresIndexManager(VectorIndexManager):
     def __init__(self, embed_model: Embeddings, index_name: str = "ojk", config: dict = {}):
         super().__init__(embed_model, index_name)
-        self.connection_string = config["postgres_uri"] + "/testvector"
+        self.base_connection_string = config["postgres_uri"]
+        self.db_name = "vector_store"
+        self.connection_string = f"{self.base_connection_string}/{self.db_name}"
         self.collection_name = f"{index_name}_collection"
+        self._create_database_and_extension()
 
-    # create database if not exists
+    def _create_database_and_extension(self):
+        # Connect to default 'postgres' database to create a new database
+        conn = psycopg2.connect(f"{self.base_connection_string}")
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cur = conn.cursor()
+        
+        try:
+            # Check if database exists
+            cur.execute(f"SELECT 1 FROM pg_catalog.pg_database WHERE datname = %s", (self.db_name,))
+            exists = cur.fetchone()
+            if not exists:
+                cur.execute(f"CREATE DATABASE {self.db_name}")
+                print(f"Database '{self.db_name}' created successfully.")
+            else:
+                print(f"Database '{self.db_name}' already exists.")
+        except Exception as e:
+            print(f"An error occurred while creating the database: {e}")
+
+        cur.close()
+        conn.close()
+
+        # Connect to the new database to create the extension
+        conn = psycopg2.connect(self.connection_string)
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cur = conn.cursor()
+        
+        try:
+            cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
+            print("Vector extension created successfully (if it didn't exist).")
+        except Exception as e:
+            print(f"An error occurred while creating the vector extension: {e}")
+
+        cur.close()
+        conn.close()
 
     def delete_index(self):
         try:
@@ -101,8 +140,6 @@ class PostgresIndexManager(VectorIndexManager):
             connection_string=self.connection_string
         )
         return self.vector_store
-
-
 
 # ================== REDIS ==================
 class RedisIndexManager(VectorIndexManager):

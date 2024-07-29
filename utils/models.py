@@ -38,6 +38,9 @@ def get_openai_models(api_key: str, llm_model_name: LLMModelName, embedding_mode
             verbose=True,
             model="gpt-4o-mini",
         )
+    else:
+        # throw error
+        raise ValueError("Model not supported in OpenAI")
         
     if embedding_model_name == EmbeddingModelName.EMBEDDING_ADA:
         embedding_llm = OpenAIEmbeddings(
@@ -48,6 +51,10 @@ def get_openai_models(api_key: str, llm_model_name: LLMModelName, embedding_mode
             api_key=api_key,
             model="text-embedding-3-small"
         )
+    else:
+        # throw error
+        raise ValueError("Model not supported in OpenAI")
+
     return llm, embedding_llm
 
 
@@ -61,6 +68,9 @@ def get_azure_openai_models(azure_endpoint: str, azure_deployment: str, api_vers
             temperature=0.0,
             verbose=True,
         )
+    else:
+        # throw error
+        raise ValueError("Model not supported in Azure OpenAI")
     
     if embedding_model_name == EmbeddingModelName.EMBEDDING_ADA:
         embedding_llm = AzureOpenAIEmbeddings(
@@ -76,6 +86,11 @@ def get_azure_openai_models(azure_endpoint: str, azure_deployment: str, api_vers
             api_key=api_key,
             api_version=api_version,
         )
+    else:
+        # throw error
+        raise ValueError("Model not supported in Azure OpenAI")
+
+
     return llm, embedding_llm
 
 

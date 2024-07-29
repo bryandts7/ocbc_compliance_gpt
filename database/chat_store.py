@@ -1,8 +1,6 @@
 from typing import List, Dict, Tuple
 from langchain.schema import BaseMessage, HumanMessage, AIMessage
 
-from urllib.parse import urlparse
-
 import psycopg2
 from langchain_community.chat_message_histories import PostgresChatMessageHistory
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
@@ -46,7 +44,7 @@ class PostgresChatStore:
     """A store for managing chat histories using PostgreSQL."""
     def __init__(self, config: dict, k: int = 5):
         self.base_connection_string = config["postgres_uri"]
-        self.db_name = "ocbc"
+        self.db_name = "chatbot_ocbc"
         self.connection_string = f"{self.base_connection_string}/{self.db_name}"
         self.table_name = "chat_history"
         self.k = k
@@ -57,7 +55,7 @@ class PostgresChatStore:
         """Create the database if it doesn't exist."""
         try:
             # Connect to 'postgres' database to create a new database
-            conn = psycopg2.connect(f"{self.base_connection_string}/postgres")
+            conn = psycopg2.connect(f"{self.base_connection_string}")
             conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
             cur = conn.cursor()
             
