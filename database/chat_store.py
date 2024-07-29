@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from typing import List, Dict, Tuple
 from langchain.schema import BaseMessage, HumanMessage, AIMessage
 
@@ -11,17 +10,10 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from pymongo import MongoClient
 from langchain_mongodb import MongoDBChatMessageHistory
 
-=======
-from pymongo import MongoClient
-from typing import List, Dict, Tuple
-from langchain.schema import BaseMessage, HumanMessage, AIMessage
-from langchain_mongodb import MongoDBChatMessageHistory
->>>>>>> 1f9e654e2ab738f8c54e720c222d37dd1745fdf9
 import redis
 from langchain_community.chat_message_histories import RedisChatMessageHistory
 
 
-<<<<<<< HEAD
 # ========== POSTGRE ==========
 class LimitedPostgresChatMessageHistory(PostgresChatMessageHistory):
     def __init__(self, k: int, *args, **kwargs):
@@ -154,8 +146,6 @@ class PostgresChatStore:
         
         return all_history
 
-=======
->>>>>>> 1f9e654e2ab738f8c54e720c222d37dd1745fdf9
 # ========== REDIS ==========
 class LimitedRedisChatMessageHistory(RedisChatMessageHistory):
     def __init__(self, k: int, *args, **kwargs):
