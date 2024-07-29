@@ -13,6 +13,9 @@ rank_bm25
 lark
 pymongo
 langchain_mongodb
+langchain-pinecone
+psycopg2
+langchain_postgres
 motor
 fastapi
 pymupdf
@@ -23,7 +26,6 @@ openpyxl
 pytz
 xlrd
 pinecone
-langchain-pinecone
 redis
 cohere
 langchain-cohere

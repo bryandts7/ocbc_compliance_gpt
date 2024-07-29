@@ -1,10 +1,150 @@
-from pymongo import MongoClient
 from typing import List, Dict, Tuple
 from langchain.schema import BaseMessage, HumanMessage, AIMessage
+
+from urllib.parse import urlparse
+
+import psycopg2
+from langchain_community.chat_message_histories import PostgresChatMessageHistory
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+
+from pymongo import MongoClient
 from langchain_mongodb import MongoDBChatMessageHistory
+
 import redis
 from langchain_community.chat_message_histories import RedisChatMessageHistory
 
+
+# ========== POSTGRE ==========
+class LimitedPostgresChatMessageHistory(PostgresChatMessageHistory):
+    def __init__(self, k: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.k = k
+
+    def add_message(self, message: BaseMessage) -> None:
+        # Directly add the message without limiting
+        super().add_message(message)
+
+    @property
+    def messages(self) -> List[BaseMessage]:
+        # Retrieve only the last k pairs of messages in the original order
+        all_messages = super().messages
+        message_pairs = []
+        for i in range(0, len(all_messages) - 1, 2):
+            if isinstance(all_messages[i], HumanMessage) and isinstance(all_messages[i+1], AIMessage):
+                message_pairs.append((all_messages[i], all_messages[i+1]))
+
+        # Take the last k pairs
+        last_k_pairs = message_pairs[-self.k:]
+
+        # Flatten the pairs back into a list
+        limited_messages = [msg for pair in last_k_pairs for msg in pair]
+
+        return limited_messages
+
+
+class PostgresChatStore:
+    """A store for managing chat histories using PostgreSQL."""
+    def __init__(self, config: dict, k: int = 5):
+        self.base_connection_string = config["postgres_uri"]
+        self.db_name = "ocbc"
+        self.connection_string = f"{self.base_connection_string}/{self.db_name}"
+        self.table_name = "chat_history"
+        self.k = k
+        self._create_database_if_not_exists()
+        self._create_table_if_not_exists()
+
+    def _create_database_if_not_exists(self):
+        """Create the database if it doesn't exist."""
+        try:
+            # Connect to 'postgres' database to create a new database
+            conn = psycopg2.connect(f"{self.base_connection_string}/postgres")
+            conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+            cur = conn.cursor()
+            
+            cur.execute(f"SELECT 1 FROM pg_catalog.pg_database WHERE datname = %s", (self.db_name,))
+            exists = cur.fetchone()
+            if not exists:
+                cur.execute(f"CREATE DATABASE {self.db_name}")
+                print(f"Database '{self.db_name}' created successfully.")
+            else:
+                print(f"Database '{self.db_name}' already exists.")
+            
+            cur.close()
+            conn.close()
+        except psycopg2.Error as e:
+            print(f"An error occurred while creating the database: {e}")
+
+    def _create_table_if_not_exists(self):
+        """Create the chat messages table if it doesn't exist."""
+        create_table_query = f"""
+        CREATE TABLE IF NOT EXISTS {self.table_name} (
+            id SERIAL PRIMARY KEY,
+            session_id TEXT NOT NULL,
+            message JSONB NOT NULL,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+        """
+        try:
+            conn = psycopg2.connect(self.connection_string)
+            cur = conn.cursor()
+            cur.execute(create_table_query)
+            conn.commit()
+            cur.close()
+            conn.close()
+            print(f"Table '{self.table_name}' created successfully (if it didn't exist).")
+        except psycopg2.Error as e:
+            print(f"An error occurred while creating the table: {e}")
+            
+    def get_session_history(self, user_id: str, conversation_id: str) -> LimitedPostgresChatMessageHistory:
+        session_id = f"{user_id}:{conversation_id}"
+        history = LimitedPostgresChatMessageHistory(
+            k=self.k,
+            connection_string=self.connection_string,
+            session_id=session_id,
+            table_name=self.table_name
+        )
+        return history
+
+    def clear_session_history(self, user_id: str, conversation_id: str) -> None:
+        """Clear the session history for a given user and conversation."""
+        session_id = f"{user_id}:{conversation_id}"
+        with psycopg2.connect(self.connection_string) as conn:
+            with conn.cursor() as cur:
+                cur.execute(f"DELETE FROM {self.table_name} WHERE session_id = %s", (session_id,))
+            conn.commit()
+
+    def clear_session_history_by_userid(self, user_id: str) -> None:
+        """Clear the session history for a given user."""
+        with psycopg2.connect(self.connection_string) as conn:
+            with conn.cursor() as cur:
+                cur.execute(f"DELETE FROM {self.table_name} WHERE session_id LIKE %s", (f"{user_id}:%",))
+            conn.commit()
+
+    def add_message_to_history(self, user_id: str, conversation_id: str, message: BaseMessage) -> None:
+        """Add a message to the session history for a given user and conversation."""
+        history = self.get_session_history(user_id, conversation_id)
+        history.add_message(message)
+
+    def clear_all(self) -> None:
+        """Clear all session histories."""
+        with psycopg2.connect(self.connection_string) as conn:
+            with conn.cursor() as cur:
+                cur.execute(f"TRUNCATE TABLE {self.table_name}")
+            conn.commit()
+
+    def get_all_history(self) -> Dict[Tuple[str, str], List[BaseMessage]]:
+        all_history = {}
+        with psycopg2.connect(self.connection_string) as conn:
+            with conn.cursor() as cur:
+                cur.execute(f"SELECT DISTINCT session_id FROM {self.table_name}")
+                session_ids = cur.fetchall()
+                
+        for (session_id,) in session_ids:
+            user_id, conversation_id = session_id.split(':', 1)
+            history = self.get_session_history(user_id, conversation_id)
+            all_history[(user_id, conversation_id)] = history.messages
+        
+        return all_history
 
 # ========== REDIS ==========
 class LimitedRedisChatMessageHistory(RedisChatMessageHistory):

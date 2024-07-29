@@ -19,7 +19,7 @@ def get_config():
     neo4j_username = os.getenv("NEO4J_USERNAME")
     neo4j_password = os.getenv("NEO4J_PASSWORD")
     neo4j_db = os.getenv("NEO4J_DATABASE")
-
+    postgres_uri = os.getenv("POSTGRES_URI")
 
     config_openai = {
         'api_key': openai_api_key,
@@ -37,6 +37,7 @@ def get_config():
         "config_azure": config_azure,
         "pinecone_api_key": pinecone_api_key,
         "cohere_api_key": cohere_api_key,
+        "postgres_uri": postgres_uri,
         "mongo_uri": mongo_uri,
         "redis_uri": redis_uri,
         "neo4j_uri": neo4j_uri,
@@ -57,6 +58,7 @@ def get_config_streamlit():
     cohere_api_key = st.secrets["cohere_api_key"]
     mongo_uri = st.secrets["mongo_uri"]
     redis_uri = st.secrets["redis_uri"]
+    postgres_uri = st.secrets["postgres_uri"]
     neo4j_uri = st.secrets["neo4j_graph_url"]
     neo4j_username = st.secrets["neo4j_username"]
     neo4j_password = st.secrets["neo4j_password"]
@@ -80,6 +82,7 @@ def get_config_streamlit():
         "cohere_api_key": cohere_api_key,
         "mongo_uri": mongo_uri,
         "redis_uri": redis_uri,
+        "postgres_uri": postgres_uri,
         "neo4j_uri": neo4j_uri,
         "neo4j_username": neo4j_username,
         "neo4j_password": neo4j_password,

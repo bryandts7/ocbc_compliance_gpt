@@ -14,6 +14,7 @@ class ModelName(Enum):
 
 class LLMModelName(Enum):
     GPT_35_TURBO = 'gpt-3.5-turbo'
+    GPT_4O_MINI = 'gpt-4o-mini'
 
 class EmbeddingModelName(Enum):
     EMBEDDING_ADA = 'ada'
@@ -29,6 +30,13 @@ def get_openai_models(api_key: str, llm_model_name: LLMModelName, embedding_mode
             temperature=0.0,
             verbose=True,
             model="gpt-3.5-turbo",
+        )
+    elif llm_model_name == LLMModelName.GPT_4O_MINI:
+        llm = ChatOpenAI(
+            api_key=api_key,
+            temperature=0.0,
+            verbose=True,
+            model="gpt-4o-mini",
         )
         
     if embedding_model_name == EmbeddingModelName.EMBEDDING_ADA:

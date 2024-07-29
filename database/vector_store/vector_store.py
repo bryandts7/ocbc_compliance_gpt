@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
-from enum import Enum
 import time
+from langchain_core.embeddings import Embeddings
 
 from pinecone import Pinecone, ServerlessSpec
 from langchain_pinecone import PineconeVectorStore
+
+from langchain_community.vectorstores import PGVector
 
 from langchain_community.vectorstores.redis import Redis
 import redis
@@ -18,6 +20,10 @@ class VectorIndexManager(ABC):
         self.vector_store = None
 
     @abstractmethod
+    def delete_index(self):
+        pass
+
+    @abstractmethod
     def store_vector_index(self, docs=None, delete=False):
         pass
 
@@ -27,11 +33,80 @@ class VectorIndexManager(ABC):
 
 
 # ================== POSTGRE ==================
+class PostgresIndexManager(VectorIndexManager):
+    def __init__(self, embed_model: Embeddings, index_name: str = "ojk", config: dict = {}):
+        super().__init__(embed_model, index_name)
+        self.connection_string = config["postgres_uri"] + "/testvector"
+        self.collection_name = f"{index_name}_collection"
+
+    # create database if not exists
+
+    def delete_index(self):
+        try:
+            PGVector.from_existing_index(
+                embedding=self.embed_model,
+                collection_name=self.collection_name,
+                connection_string=self.connection_string
+            ).delete_collection()
+            print(f"Deleted collection '{self.collection_name}'.")
+        except Exception as e:
+            print(f"Error deleting collection: {e}")
+
+    def store_vector_index(self, docs, batch_size: int = 200):
+        log_path = './database/store_logs'
+        
+        if os.path.exists(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt')):
+            with open(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt'), 'r') as f:
+                start_split_idx = int(f.read())
+            print(f"Start loading from idx: {start_split_idx}")
+        else:
+            with open(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt'), 'w') as f:
+                f.write(str(0))
+            start_split_idx = 0
+
+        if start_split_idx < batch_size:
+            self.vector_store = PGVector.from_documents(
+                documents=docs[0:batch_size],
+                embedding=self.embed_model,
+                collection_name=self.collection_name,
+                connection_string=self.connection_string
+            )
+            time.sleep(4)
+
+            last_split_idx = min(batch_size, len(docs))
+            with open(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt'), 'w') as f:
+                f.write(str(last_split_idx))
+            print(f"Loaded 1-{last_split_idx} documents")
+            start_split_idx = batch_size
+        else:
+            self.vector_store = PGVector.from_existing_index(
+                embedding=self.embed_model,
+                collection_name=self.collection_name,
+                connection_string=self.connection_string
+            )
+
+        for i in range(start_split_idx, len(docs), batch_size):
+            documents = docs[i:i+batch_size]
+            self.vector_store.add_documents(documents)
+            time.sleep(4)
+            last_split_idx = min(i+batch_size, len(docs))
+            with open(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt'), 'w') as f:
+                f.write(str(last_split_idx))
+            print(f"Loaded {i+1}-{last_split_idx} documents")
+
+    def load_vector_index(self):
+        self.vector_store = PGVector.from_existing_index(
+            embedding=self.embed_model,
+            collection_name=self.collection_name,
+            connection_string=self.connection_string
+        )
+        return self.vector_store
+
 
 
 # ================== REDIS ==================
 class RedisIndexManager(VectorIndexManager):
-    def __init__(self, embed_model, index_name="ojk", config: dict = {}, db_id: int = 0):
+    def __init__(self, embed_model: Embeddings, index_name="ojk", config: dict = {}, db_id: int = 0):
         super().__init__(embed_model, index_name)
         self.redis_uri = config["redis_uri"] + "/" + str(db_id)
         self.redis_client = redis.from_url(self.redis_uri)
@@ -118,14 +193,14 @@ class RedisIndexManager(VectorIndexManager):
 
 # ================== PINECONE ==================
 class PineconeIndexManager(VectorIndexManager):
-    def __init__(self, embed_model, index_name="ojk", config: dict = {}):
+    def __init__(self, embed_model: Embeddings, index_name="ojk", config: dict = {}):
         super().__init__(embed_model, index_name)
         self.api_key = config["pinecone_api_key"]
         self.pc = Pinecone(api_key=self.api_key)
         self._create_index_if_not_exists()
         self.index = self.pc.Index(self.index_name)
 
-    def delete_all(self):
+    def delete_index(self):
         self.index.delete(delete_all=True)
         print("Deleted all keys in the database.")
 
