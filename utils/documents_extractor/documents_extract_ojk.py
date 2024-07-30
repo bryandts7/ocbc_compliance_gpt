@@ -9,8 +9,6 @@ import xlrd
 import datetime
 
 # ==================== EXTRACT TEXT FROM PDF ====================
-
-
 def extract_text_and_images_from_page(doc, page, ocr, treshold):
     text = page.get_text()
     image_text = ""
@@ -125,7 +123,7 @@ def extract_metadata_from_dataframe(metadata):
     date_str = metadata['tanggal_berlaku']
     day, month_name, year = date_str.split()
     month = month_mapping[month_name]
-    effective_date = datetime.datetime(int(year), month, int(day))
+    effective_date = datetime.datetime(int(year), month, int(day)).strftime('%Y-%m-%d')
     
     return {
         "doc_id": int(metadata['doc_id']),

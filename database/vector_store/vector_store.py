@@ -139,6 +139,7 @@ class PostgresIndexManager(VectorIndexManager):
             collection_name=self.collection_name,
             connection_string=self.connection_string
         )
+        print(f"Loaded collection '{self.collection_name}'.")
         return self.vector_store
 
 # ================== REDIS ==================
@@ -224,6 +225,7 @@ class RedisIndexManager(VectorIndexManager):
             embedding=self.embed_model,
             schema="./database/vector_store/redis_schema/vectorstore_redis_schema_" + self.index_name + '.yaml',
         )
+        print(f"Loaded index '{self.index_name}'.")
         return self.vector_store
 
 
@@ -284,5 +286,6 @@ class PineconeIndexManager(VectorIndexManager):
             raise ValueError(f"Index {self.index_name} does not exist.")
 
         self.vector_store = PineconeVectorStore(index=self.pc.Index(self.index_name), embedding=self.embed_model)
+        print(f"Loaded index '{self.index_name}'.")
         return self.vector_store
 
