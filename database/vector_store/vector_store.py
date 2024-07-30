@@ -9,12 +9,10 @@ import psycopg2
 from langchain_community.vectorstores import PGVector
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
-
 from langchain_community.vectorstores.redis import Redis
 import redis
 
 import os
-
 
 class VectorIndexManager(ABC):
     def __init__(self, embed_model, index_name="ojk"):
@@ -33,6 +31,9 @@ class VectorIndexManager(ABC):
     @abstractmethod
     def load_vector_index(self):
         pass
+
+
+# ================== ELASTIC SEARCH ==================
 
 
 # ================== POSTGRE ==================
@@ -81,12 +82,15 @@ class PostgresIndexManager(VectorIndexManager):
         conn.close()
 
     def delete_index(self):
+        log_path = './database/store_logs'
         try:
             PGVector.from_existing_index(
                 embedding=self.embed_model,
                 collection_name=self.collection_name,
                 connection_string=self.connection_string
             ).delete_collection()
+            with open(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt'), 'w') as f:
+                f.write(str(0))
             print(f"Deleted collection '{self.collection_name}'.")
         except Exception as e:
             print(f"Error deleting collection: {e}")
@@ -152,10 +156,13 @@ class RedisIndexManager(VectorIndexManager):
         self.embed_model = embed_model
 
     def delete_index(self):
+        log_path = './database/store_logs'
         # Delete the index
         try:
             self.redis_client.ft(self.index_name).dropindex(delete_documents=True)
             print(f"Deleted index '{self.index_name}' and its associated documents.")
+            with open(os.path.join(log_path, 'start_store_idx_' + self.index_name + '.txt'), 'w') as f:
+                f.write(str(0))
         except redis.exceptions.ResponseError as e:
             if "Unknown index name" in str(e):
                 print(f"Index '{self.index_name}' does not exist.")
@@ -240,7 +247,10 @@ class PineconeIndexManager(VectorIndexManager):
         self.index = self.pc.Index(self.index_name)
 
     def delete_index(self):
+        log_path = './database/store_logs'
         self.index.delete(delete_all=True)
+        with open(os.path.join(log_path, 'start_store_idx_' + self.index_name + '.txt'), 'w') as f:
+            f.write(str(0))
         print("Deleted all keys in the database.")
 
     def _create_index_if_not_exists(self):

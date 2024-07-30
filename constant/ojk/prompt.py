@@ -8,16 +8,10 @@ Use the context information only, without relying on external sources.
 ALWAYS ANSWER IN THE USER'S LANGUAGE.
 
 Please provide your answer in the following format, \
-Always include the regulation number and file URL:
+Always include the source regulation number and file URL:
 
 [Your answer here] \n\n
 Source: [regulation_number](file_url)
-
-If the file_url ends with '.pdf', you can add the metadata['page_number'] \
-in the URL like this: 
-
-[Your answer here] \n\n
-Source: [regulation_number](file_url#page=page_number)
 
 DO NOT PROVIDE AMBIGUOUS ANSWERS.
 DO NOT ANSWER THE QUESTION THAT IS NOT RELATED TO THE CONTEXT.
