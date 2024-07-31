@@ -97,7 +97,7 @@ def convert_text_to_document(metadata, text, page_number=None):
     metadata = extract_metadata_from_dataframe(metadata)
     metadata.pop('effective_date_id_str')
     if page_number is None:
-        metadata['page_number'] = 'NO DATA'
+        metadata['page_number'] = None
         return Document(
             page_content=text,
             metadata=metadata
@@ -119,24 +119,34 @@ def extract_metadata_from_dataframe(metadata):
         'November': 11, 'Desember': 12
     }
     
-    # Extract and convert the effective_date to datetime
-    date_str = metadata['tanggal_berlaku']
-    day, month_name, year = date_str.split()
-    month = month_mapping[month_name]
-    effective_date = datetime.datetime(int(year), month, int(day)).strftime('%Y/%m/%d')
+    # Convert 'NO DATA' to None
+    def convert_no_data(value):
+        return None if value == 'NO DATA' else value
     
-    return {
-        "doc_id": int(metadata['doc_id']),
-        "title": metadata['title'],
-        "sector": metadata['sektor'],
-        "subsector": metadata['subsektor'],
-        "regulation_type": metadata['jenis_regulasi'],
-        "regulation_number": metadata['nomor_regulasi'],
-        "effective_date": effective_date,
-        "effective_date_id_str": date_str,
-        "file_url": metadata['file_url'],
+    # Convert metadata values
+    metadata = {
+        "doc_id": convert_no_data(metadata['doc_id']),
+        "title": convert_no_data(metadata['title']),
+        "sector": convert_no_data(metadata['sektor']),
+        "subsector": convert_no_data(metadata['subsektor']),
+        "regulation_type": convert_no_data(metadata['jenis_regulasi']),
+        "regulation_number": convert_no_data(metadata['nomor_regulasi']),
+        "effective_date": convert_no_data(metadata['tanggal_berlaku']),
+        "effective_date_id_str": convert_no_data(metadata['tanggal_berlaku']),
+        "file_url": convert_no_data(metadata['file_url']),
     }
+    
+    # Extract and convert the effective_date to datetime
+    if metadata['effective_date'] is not None:
+        date_str = metadata['effective_date']
+        day, month_name, year = date_str.split()
+        month = month_mapping[month_name]
+        effective_date = datetime.datetime(int(year), month, int(day)).strftime('%Y/%m/%d')
+        metadata['effective_date'] = effective_date
+    else:
+        metadata['effective_date'] = None
 
+    return metadata
 
 # Format metadata to string
 def format_metadata(metadata):

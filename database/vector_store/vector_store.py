@@ -12,7 +12,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from langchain_community.vectorstores.redis import Redis
 import redis
 
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, NotFoundError as ESNotFoundError
 from langchain_community.vectorstores import ElasticsearchStore
 
 import os
@@ -48,7 +48,8 @@ class ElasticIndexManager(VectorIndexManager):
             hosts=self.host,
             basic_auth=(self.user, self.password),
             max_retries=10,
-            verify_certs=False
+            verify_certs=False,
+            retry_on_timeout=True,
         )
         
     def delete_index(self):
