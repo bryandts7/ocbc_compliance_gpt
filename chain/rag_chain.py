@@ -21,7 +21,7 @@ from constant.sikepo.prompt import QA_SYSTEM_PROMPT_SIKEPO, ROUTER_PROMPT, REKAM
 from constant.ojk.prompt import QA_SYSTEM_PROMPT_OJK
 from constant.bi.prompt import QA_SYSTEM_PROMPT_BI
 from constant.bi.prompt import QA_SYSTEM_PROMPT_BI
-from constant.prompt import CONTEXTUALIZE_Q_PROMPT_STR, QA_SYSTEM_TEMPLATE
+from constant.prompt import CONTEXTUALIZE_Q_PROMPT_STR, QA_SYSTEM_TEMPLATE, QA_SYSTEM_TEMPLATE_COMBINED_ANSWER
 
 def retriever_to_list(results:list):
     return results[:]
@@ -102,7 +102,71 @@ def create_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetri
 
     return full_chain
 
-def create_combined_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
+def create_combined_create_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
+                          graph_chain:GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
+    CONTEXTUALIZE_Q_PROMPT = PromptTemplate.from_template(CONTEXTUALIZE_Q_PROMPT_STR)
+    _inputs_question = CONTEXTUALIZE_Q_PROMPT | llm_model | StrOutputParser()
+
+    question_router = question_router_chain(llm_model, ROUTER_PROMPT)
+    QA_SYSTEM_PROMPT = PromptTemplate(input_variables=["answer_ojk", "answer_bi", "answer_sikepo", "question"], template=QA_SYSTEM_TEMPLATE_COMBINED_ANSWER)
+
+    ojk_chain = create_ojk_chain(
+        qa_system_prompt_str=QA_SYSTEM_PROMPT_OJK,
+        llm_model=llm_model,
+        retriever=retriever_ojk
+    )
+    bi_chain = create_bi_chain(
+        qa_system_prompt_str=QA_SYSTEM_PROMPT_BI,
+        llm_model=llm_model,
+        retriever=retriever_bi
+    )
+    sikepo_ketentuan_chain = create_sikepo_ketentuan_chain(
+        qa_system_prompt_str=QA_SYSTEM_PROMPT_SIKEPO,
+        llm_model=llm_model,
+        retriever=retriever_sikepo_ketentuan
+    )
+    sikepo_rekam_chain = create_sikepo_rekam_chain(
+        # CONTEXTUALIZE_Q_PROMPT_SIKEPO, QA_SYSTEM_PROMPT_KETENTUAN_SIKEPO, REKAM_JEJAK_CONTEXT, retriever_sikepo_rekam, graph_chain, llm_model
+        qa_system_prompt_str=QA_SYSTEM_PROMPT_SIKEPO,
+        llm_model=llm_model,
+        rekam_jejak_context=REKAM_JEJAK_CONTEXT,
+        graph_chain=graph_chain,
+        retriever=retriever_sikepo_rekam,
+    )
+    general_chain = PromptTemplate.from_template(
+    """Answer 'Saya tidak tahu' """
+    ) | llm_model | StrOutputParser()
+
+    ketentuan_chain = RunnablePassthrough() | {"question": itemgetter("question")} | {
+                        "chain_ojk"         :   ojk_chain ,
+                        "chain_bi"          :   bi_chain,
+                        "chain_sikepo"      :   sikepo_ketentuan_chain,
+                        "question"          :   itemgetter("question")
+                        } | {
+                        "answer_ojk"        :   itemgetter("chain_ojk") | itemgetter("answer"),
+                        "context_ojk"       :   itemgetter("chain_ojk") | itemgetter("context"),
+                        "answer_bi"         :   itemgetter("chain_bi") | itemgetter("answer"),
+                        "context_bi"        :   itemgetter("chain_bi") | itemgetter("context"),
+                        "answer_sikepo"     :   itemgetter("chain_sikepo") | itemgetter("answer"),
+                        "context_sikepo"    :   itemgetter("chain_sikepo") | itemgetter("context"),
+                        } | {
+                        "rewrited question" :   itemgetter("question"),
+                        "context"           :   RunnableLambda(merge_context),
+                        "answer"            :   QA_SYSTEM_PROMPT | llm_model | StrOutputParser()
+                        }
+
+    full_chain = _inputs_question | {
+        "result": question_router | StrOutputParser(),
+        "question": RunnablePassthrough(),
+    } | RunnablePassthrough() | RunnableBranch(
+        (lambda x: "rekam_jejak" in x["result"], sikepo_rekam_chain),
+        (lambda x: "ketentuan_terkait" in x["result"], ketentuan_chain),
+        general_chain,
+    )
+
+    return full_chain
+
+def create_combined_context_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
                           graph_chain:GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
     
     CONTEXTUALIZE_Q_PROMPT = PromptTemplate.from_template(CONTEXTUALIZE_Q_PROMPT_STR)

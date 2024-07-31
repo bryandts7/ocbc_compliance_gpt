@@ -54,23 +54,28 @@ SIKEPO Context: {context_sikepo}
 
 You also received OJK and BI context from OJK (Otoritas Jasa Keuangan) and BI (Bank Indonesia) Website to answer the same question. 
 Based on the context provided, answer the query related to banking compliance in Indonesia.
-If you use OJK Context in your answer, please provide your answer in the following format, \
+If you use OJK or BI Context in your answer, please provide your answer in the following format, \
 Always include the source regulation number and file URL:
 
 [Your answer here] \n\n
 Source: [regulation_number](file_url)
-
-If you cannot find the regulation number, just provide the answer. 
-If the file_url ends with '.pdf', you can add the metadata['page_number'] in the URL like this: 
-
-[Your answer here] \n\n
-Source: [metadata['title']](metadata['file_url#page=metadata['page_number']')
 
 DO NOT PROVIDE AMBIGUOUS ANSWERS.
 DO NOT ANSWER THE QUESTION THAT IS NOT RELATED TO THE CONTEXT.
 
 OJK Context: {context_ojk}
 BI Context: {context_bi}
+
+Question: {question}
+"""
+
+QA_SYSTEM_TEMPLATE_COMBINED_ANSWER = """
+You are an assistant for question-answering tasks. Use the following pieces answers from LLM Chain from multiple type of retrievers.
+Please do not use your prior knowledge. If the question does not related to the context given, just answer 'Saya tidak tahu mengenai hal tersebut'. 
+
+LLM Answer from SIKEPO Website:{answer_sikepo}
+LLM Answer from OJK Website: {answer_ojk}
+LLM Answer from BI Website: {answer_bi}
 
 Question: {question}
 """
