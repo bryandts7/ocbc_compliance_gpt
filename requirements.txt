@@ -16,6 +16,7 @@ langchain_mongodb
 langchain-pinecone
 psycopg2
 langchain_postgres
+langchain_elasticsearch
 motor
 fastapi
 pymupdf

@@ -1,5 +1,6 @@
 from typing import List, Dict, Tuple
 from langchain.schema import BaseMessage, HumanMessage, AIMessage
+import time
 
 import psycopg2
 from langchain_community.chat_message_histories import PostgresChatMessageHistory
@@ -11,6 +12,100 @@ from langchain_mongodb import MongoDBChatMessageHistory
 import redis
 from langchain_community.chat_message_histories import RedisChatMessageHistory
 
+from elasticsearch import Elasticsearch, exceptions as es_exceptions
+from langchain_community.chat_message_histories import ElasticsearchChatMessageHistory
+
+
+# ========== ELASTICSEARCH ==========
+class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
+    def __init__(self, k: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.k = k
+
+    def add_message(self, message: BaseMessage) -> None:
+        # Directly add the message without limiting
+        super().add_message(message)
+
+    @property
+    def messages(self) -> List[BaseMessage]:
+        # Retrieve only the last k pairs of messages in the original order
+        all_messages = super().messages
+        message_pairs = []
+        for i in range(0, len(all_messages) - 1, 2):
+            if isinstance(all_messages[i], HumanMessage) and isinstance(all_messages[i+1], AIMessage):
+                message_pairs.append((all_messages[i], all_messages[i+1]))
+
+        # Take the last k pairs
+        last_k_pairs = message_pairs[-self.k:]
+
+        # Flatten the pairs back into a list
+        limited_messages = [msg for pair in last_k_pairs for msg in pair]
+
+        return limited_messages
+
+class ElasticChatStore:
+    """A store for managing chat histories using Elasticsearch."""
+
+    def __init__(self, config: dict, k: int = 5):
+        self.host = config["es_uri"]
+        self.user = config["es_username"]
+        self.password = config["es_password"]
+        self.index_name = "chat_history"
+        self.k = k
+        
+        self.es_client = Elasticsearch(
+            hosts=self.host,
+            basic_auth=(self.user, self.password),
+            max_retries=10,
+            verify_certs=False
+        )
+
+    def get_session_history(self, user_id: str, conversation_id: str) -> LimitedElasticsearchChatMessageHistory:
+        session_id = f"{user_id}:{conversation_id}"
+        history = LimitedElasticsearchChatMessageHistory(
+            k=self.k,
+            es_connection=self.es_client,
+            index=self.index_name,
+            session_id=session_id
+        )
+        return history
+
+    def clear_session_history(self, user_id: str, conversation_id: str) -> None:
+        """Clear the session history for a given user and conversation."""
+        session_id = f"{user_id}:{conversation_id}"
+        query = {"query": {"term": {"session_id.keyword": session_id}}}
+        self.es_client.delete_by_query(index=self.index_name, body=query)
+
+    def clear_session_history_by_userid(self, user_id: str) -> None:
+        """Clear the session history for a given user."""
+        query = {"query": {"prefix": {"session_id.keyword": f"{user_id}:"}}}
+        self.es_client.delete_by_query(index=self.index_name, body=query)
+
+    def add_message_to_history(self, user_id: str, conversation_id: str, message: BaseMessage) -> None:
+        """Add a message to the session history for a given user and conversation."""
+        history = self.get_session_history(user_id, conversation_id)
+        history.add_message(message)
+
+    def clear_all(self) -> None:
+        """Clear all session histories."""
+        try:
+            self.es_client.indices.delete(index=self.index_name)
+        except es_exceptions.NotFoundError:
+            pass  # Index doesn't exist, so no need to delete
+
+    def get_all_history(self) -> Dict[Tuple[str, str], List[BaseMessage]]:
+        all_history = {}
+        query = {"query": {"match_all": {}}, "size": 10000}  # Adjust size as needed
+        results = self.es_client.search(index=self.index_name, body=query)
+        
+        for hit in results['hits']['hits']:
+            session_id = hit['_source']['session_id']
+            user_id, conversation_id = session_id.split(':', 1)
+            history = self.get_session_history(user_id, conversation_id)
+            all_history[(user_id, conversation_id)] = history.messages
+        
+        return all_history
+        
 
 # ========== POSTGRE ==========
 class LimitedPostgresChatMessageHistory(PostgresChatMessageHistory):

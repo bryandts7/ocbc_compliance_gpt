@@ -12,6 +12,9 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from langchain_community.vectorstores.redis import Redis
 import redis
 
+from elasticsearch import Elasticsearch
+from langchain_community.vectorstores import ElasticsearchStore
+
 import os
 
 class VectorIndexManager(ABC):
@@ -34,7 +37,80 @@ class VectorIndexManager(ABC):
 
 
 # ================== ELASTIC SEARCH ==================
+class ElasticIndexManager(VectorIndexManager):
+    def __init__(self, embed_model, index_name="ojk", config=None):
+        super().__init__(embed_model, index_name)
+        self.host = config["es_uri"]
+        self.user = config["es_username"]
+        self.password = config["es_password"]
+        
+        self.es_client = Elasticsearch(
+            hosts=self.host,
+            basic_auth=(self.user, self.password),
+            max_retries=10,
+            verify_certs=False
+        )
+        
+    def delete_index(self):
+        log_path = './database/store_logs'
+        try:
+            self.es_client.indices.delete(index=self.index_name)
+            print(f"Deleted index '{self.index_name}'.")
+            with open(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt'), 'w') as f:
+                f.write(str(0))
+        except Exception as e:
+            print(f"Error deleting index: {e}")
 
+    def store_vector_index(self, docs, batch_size=200):
+        log_path = './database/store_logs'
+        
+        if os.path.exists(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt')):
+            with open(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt'), 'r') as f:
+                start_split_idx = int(f.read())
+            print(f"Start loading from idx: {start_split_idx}")
+        else:
+            with open(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt'), 'w') as f:
+                f.write(str(0))
+            start_split_idx = 0
+
+        if start_split_idx < batch_size:
+            self.vector_store = ElasticsearchStore.from_documents(
+                documents=docs[0:batch_size],
+                embedding=self.embed_model,
+                es_connection=self.es_client,
+                index_name=self.index_name
+            )
+            time.sleep(4)
+
+            last_split_idx = min(batch_size, len(docs))
+            with open(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt'), 'w') as f:
+                f.write(str(last_split_idx))
+            print(f"Loaded 1-{last_split_idx} documents")
+            start_split_idx = batch_size
+        else:
+            self.vector_store = ElasticsearchStore(
+                embedding=self.embed_model,
+                es_connection=self.es_client,
+                index_name=self.index_name
+            )
+
+        for i in range(start_split_idx, len(docs), batch_size):
+            documents = docs[i:i+batch_size]
+            self.vector_store.add_documents(documents)
+            time.sleep(4)
+            last_split_idx = min(i+batch_size, len(docs))
+            with open(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt'), 'w') as f:
+                f.write(str(last_split_idx))
+            print(f"Loaded {i+1}-{last_split_idx} documents")
+
+    def load_vector_index(self):
+        self.vector_store = ElasticsearchStore(
+            embedding=self.embed_model,
+            es_connection=self.es_client,
+            index_name=self.index_name
+        )
+        print(f"Loaded index '{self.index_name}'.")
+        return self.vector_store
 
 # ================== POSTGRE ==================
 class PostgresIndexManager(VectorIndexManager):

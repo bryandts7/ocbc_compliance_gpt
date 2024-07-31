@@ -20,6 +20,9 @@ def get_config():
     neo4j_password = os.getenv("NEO4J_PASSWORD")
     neo4j_db = os.getenv("NEO4J_DATABASE")
     postgres_uri = os.getenv("POSTGRES_URI")
+    es_uri = os.getenv("ES_URI")
+    es_username = os.getenv("ES_USERNAME")
+    es_password = os.getenv("ES_PASSWORD")
 
     config_openai = {
         'api_key': openai_api_key,
@@ -43,7 +46,10 @@ def get_config():
         "neo4j_uri": neo4j_uri,
         "neo4j_username": neo4j_username,
         "neo4j_password": neo4j_password,
-        "neo4j_db": neo4j_db
+        "neo4j_db": neo4j_db,
+        "es_uri": es_uri,
+        "es_username": es_username,
+        "es_password": es_password
     }
 
 # for deployment
@@ -63,6 +69,9 @@ def get_config_streamlit():
     neo4j_username = st.secrets["neo4j_username"]
     neo4j_password = st.secrets["neo4j_password"]
     neo4j_db = st.secrets["neo4j_database"]
+    es_uri = st.secrets["es_uri"]
+    es_username = st.secrets["es_username"]
+    es_password = st.secrets["es_password"]
 
     config_openai = {
         'api_key': openai_api_key,
@@ -86,6 +95,9 @@ def get_config_streamlit():
         "neo4j_uri": neo4j_uri,
         "neo4j_username": neo4j_username,
         "neo4j_password": neo4j_password,
-        "neo4j_db": neo4j_db
+        "neo4j_db": neo4j_db,
+        "es_uri": es_uri,
+        "es_username": es_username,
+        "es_password": es_password
     }
 
