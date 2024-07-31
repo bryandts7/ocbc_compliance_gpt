@@ -10,7 +10,7 @@ from retriever.retriever_ojk.retriever_ojk import get_retriever_ojk
 from retriever.retriever_bi.retriever_bi import get_retriever_bi
 from retriever.retriever_sikepo.lotr_sikepo import lotr_sikepo
 from database.chat_store import RedisChatStore
-from chain.rag_chain import create_chain_with_chat_history, create_chain
+from chain.rag_chain import create_chain_with_chat_history, create_sequential_chain, create_combined_answer_chain, create_combined_context_chain
 from retriever.retriever_sikepo.graph_cypher_retriever import graph_rag_chain
 from chain.rag_chain import get_response
 
@@ -57,7 +57,7 @@ chat_store = RedisChatStore(k=3, config=config, db_id=1)
 # =========== CHAIN ===========
 graph_chain = graph_rag_chain(llm_model, llm_model, graph=graph)
 
-chain = create_chain(
+chain = create_combined_answer_chain(
     llm_model=llm_model,
     graph_chain=graph_chain,
     retriever_ojk=retriever_ojk,

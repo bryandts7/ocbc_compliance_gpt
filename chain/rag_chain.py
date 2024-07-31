@@ -45,7 +45,7 @@ def routing_ketentuan_chain(chain, llm_model):
     return result_chain
 
 
-def create_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
+def create_sequential_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
                  graph_chain:GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
     ojk_chain = create_ojk_chain(
         qa_system_prompt_str=QA_SYSTEM_PROMPT_OJK,
@@ -102,7 +102,7 @@ def create_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetri
 
     return full_chain
 
-def create_combined_create_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
+def create_combined_answer_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
                           graph_chain:GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
     CONTEXTUALIZE_Q_PROMPT = PromptTemplate.from_template(CONTEXTUALIZE_Q_PROMPT_STR)
     _inputs_question = CONTEXTUALIZE_Q_PROMPT | llm_model | StrOutputParser()
