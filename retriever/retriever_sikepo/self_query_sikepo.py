@@ -3,6 +3,8 @@ from langchain.retrievers.self_query.base import SelfQueryRetriever
 from langchain_core.language_models.base import BaseLanguageModel
 from langchain_core.vectorstores import VectorStore
 
+from retriever.self_query import self_query
+
 
 metadata_field_info = [
     AttributeInfo(
@@ -44,14 +46,6 @@ metadata_field_info = [
 
 document_content_description = "Isi Ketentuan dari Peraturan"
 
-
-# ini juga gua buat satu aja jadi kalau mau make self self_query_retriever_ketentuan_terkait, tinggal pake vector_store ketentuan terkait aja
-def self_query_retriever_sikepo(llm_model: BaseLanguageModel, vector_store: VectorStore):
-    retriever = SelfQueryRetriever.from_llm(
-        llm=llm_model,
-        vectorstore=vector_store,
-        document_contents=document_content_description,
-        metadata_field_info=metadata_field_info,
-        verbose=True,
-    )
-    return retriever
+# Create query constructor
+def self_query_retriever_sikepo(llm_model: BaseLanguageModel, vector_store: VectorStore, search_type: str = "mmr") -> SelfQueryRetriever:
+    return self_query(llm_model, vector_store, document_content_description, metadata_field_info, search_type=search_type)

@@ -26,7 +26,6 @@ QA_SYSTEM_PROMPT_SIKEPO = (
     "the question. If you don't know the answer, say that you "
     "don't know. Please do not use your prior knowledge."
     "If the question does not related to the context given, just answer 'Saya tidak tahu mengenai hal tersebut'. "
-    "Use three (3) sentences maximum and keep the answer concise."
     "Please write your answer ONLY in INDONESIAN."
 
     "Jika pertanyaan menanyakan tentang peraturan, tulis dengan detail nomor ketentuan dan ketentuannya secara detail"

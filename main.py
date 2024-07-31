@@ -4,13 +4,13 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from utils.config import get_config
 from utils.models import ModelName, LLMModelName, EmbeddingModelName, get_model
-from database.vector_store.vector_store import RedisIndexManager
+from database.vector_store.vector_store import RedisIndexManager, ElasticIndexManager
 from database.vector_store.neo4j_graph_store import Neo4jGraphStore
 from retriever.retriever_ojk.retriever_ojk import get_retriever_ojk
 from retriever.retriever_bi.retriever_bi import get_retriever_bi
 from retriever.retriever_sikepo.lotr_sikepo import lotr_sikepo
-from database.chat_store import RedisChatStore
-from chain.rag_chain import create_chain_with_chat_history, create_chain
+from database.chat_store import RedisChatStore, ElasticChatStore
+from chain.rag_chain import create_chain_with_chat_history, create_sequential_chain, create_combined_answer_chain, create_combined_context_chain
 from retriever.retriever_sikepo.graph_cypher_retriever import graph_rag_chain
 from chain.rag_chain import get_response
 
@@ -24,21 +24,23 @@ CONVERSATION_ID = 'xmriz-2021-07-01-01'
 
 
 # =========== MODEL ===========
-model_name = ModelName.AZURE_OPENAI
-llm_model, embed_model = get_model(model_name=model_name, config=config, llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
+model_name = ModelName.OPENAI
+llm_model, embed_model = get_model(model_name=model_name, config=config, llm_model_name=LLMModelName.GPT_4O_MINI, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
 
 # =========== VECTOR STORE ===========
-redis_ojk = RedisIndexManager(index_name='ojk', embed_model=embed_model, config=config, db_id=0)
-vector_store_ojk = redis_ojk.load_vector_index()
+index_ojk = ElasticIndexManager(index_name='ojk', embed_model=embed_model, config=config)
+vector_store_ojk = index_ojk.load_vector_index()
 
-redis_bi = RedisIndexManager(index_name='bi', embed_model=embed_model, config=config, db_id=0)
-vector_store_bi = redis_bi.load_vector_index()
+# index_bi = ElasticIndexManager(index_name='bi', embed_model=embed_model, config=config)
+# vector_store_bi = index_bi.load_vector_index()
+index_bi = ElasticIndexManager(index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config)
+vector_store_bi = index_bi.load_vector_index()
 
-redis_sikepo_ket = RedisIndexManager(index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config, db_id=0)
-vector_store_ket = redis_sikepo_ket.load_vector_index()
+index_sikepo_ket = ElasticIndexManager(index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config)
+vector_store_ket = index_sikepo_ket.load_vector_index()
 
-redis_sikepo_rek = RedisIndexManager(index_name='sikepo-rekam-jejak', embed_model=embed_model, config=config, db_id=0)
-vector_store_rek = redis_sikepo_rek.load_vector_index()
+index_sikepo_rek = ElasticIndexManager(index_name='sikepo-rekam-jejak', embed_model=embed_model, config=config)
+vector_store_rek = index_sikepo_rek.load_vector_index()
 
 neo4j_sikepo = Neo4jGraphStore(config=config)
 graph = neo4j_sikepo.get_graph()
@@ -51,13 +53,13 @@ retriever_sikepo_ket = lotr_sikepo(vector_store=vector_store_ket, llm_model=llm_
 retriever_sikepo_rek = lotr_sikepo(vector_store=vector_store_rek, llm_model=llm_model, embed_model=embed_model, config=config)
 
 # =========== CHAT STORE ===========
-chat_store = RedisChatStore(k=3, config=config, db_id=1)
+chat_store = ElasticChatStore(k=3, config=config)
 
 
 # =========== CHAIN ===========
 graph_chain = graph_rag_chain(llm_model, llm_model, graph=graph)
 
-chain = create_chain(
+chain = create_combined_context_chain(
     llm_model=llm_model,
     graph_chain=graph_chain,
     retriever_ojk=retriever_ojk,

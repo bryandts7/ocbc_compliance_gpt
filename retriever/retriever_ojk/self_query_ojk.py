@@ -7,6 +7,7 @@ from langchain_core.language_models.base import BaseLanguageModel
 from langchain.retrievers.self_query.base import SelfQueryRetriever
 from langchain_core.vectorstores import VectorStore
 
+from retriever.self_query import self_query
 
 # Define metadata field information
 metadata_field_info = [
@@ -37,50 +38,18 @@ metadata_field_info = [
     ),
     AttributeInfo(
         name="effective_date",
-        description="The effective date of the regulation in format DD Month YYYY, e.g. 1 Januari 2021",
-        type="string",
+        description="The effective date of the regulation",
+        type="date",
     ),
 ]
 
 # Define document content description
 document_content_description = "The content of the document"
 
-# Define prompt
-schema_prompt = """
-Please provide the schema of the structured query. Only the following attributes are allowed:
-- title
-- sector
-- subsector
-- regulation_type
-- regulation_number
-- effective_date
-
-Ensure that user queries are interpreted correctly by mapping common phrases to the corresponding attributes:
-- "judul" or any mention of a title should be interpreted as the attribute 'title'
-- "sektor" or any mention of a sector should be interpreted as the attribute 'sector'
-- "subsektor" or any mention of a subsector should be interpreted as the attribute 'subsector'
-- "tipe regulasi" or any mention of a regulation type should be interpreted as the attribute 'regulation_type'
-- "nomor regulasi" or any mention of a regulation number should be interpreted as the attribute 'regulation_number'
-- "tanggal berlaku" or any mention of an effective date should be interpreted as the attribute 'effective_date'
-"""
 
 # Create query constructor
 def self_query_ojk(llm_model: BaseLanguageModel, vector_store: VectorStore, search_type: str = "similarity") -> SelfQueryRetriever:
-    prompt = get_query_constructor_prompt(
-        document_contents=document_content_description,
-        attribute_info=metadata_field_info,
-        schema_prompt=schema_prompt,
-    )
-    output_parser = StructuredQueryOutputParser.from_components()
-    query_constructor = prompt | llm_model | output_parser
-
-    retriever = SelfQueryRetriever(
-        query_constructor=query_constructor,
-        vectorstore=vector_store,
-        search_type=search_type,
-    )
-
-    return retriever
+    return self_query(llm_model, vector_store, document_content_description, metadata_field_info, search_type=search_type)
 
 
     
