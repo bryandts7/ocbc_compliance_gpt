@@ -24,7 +24,8 @@ from constant.bi.prompt import QA_SYSTEM_PROMPT_BI
 from constant.prompt import CONTEXTUALIZE_Q_PROMPT_STR, QA_SYSTEM_TEMPLATE, QA_SYSTEM_TEMPLATE_COMBINED_ANSWER
 
 def retriever_to_list(results:list):
-    return results[:]
+    print(results)
+    return str(results)
 
 def merge_context(results):
     merged = results["context_ojk"] + results["context_bi"] + results["context_sikepo"]
@@ -102,6 +103,7 @@ def create_sequential_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam
 
     return full_chain
 
+# Still error
 def create_combined_answer_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
                           graph_chain:GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
     CONTEXTUALIZE_Q_PROMPT = PromptTemplate.from_template(CONTEXTUALIZE_Q_PROMPT_STR)
@@ -186,14 +188,9 @@ def create_combined_context_chain(retriever_ojk: BaseRetriever, retriever_sikepo
         graph_chain=graph_chain,
         retriever=retriever_sikepo_rekam,
     )
-
-    # _parallel = RunnableParallel(context_ojk = retriever_ojk | retriever_to_list, context_bi = retriever_bi | retriever_to_list, context_sikepo = retriever_sikepo_ketentuan | retriever_to_list, question = RunnablePassthrough())
-    ketentuan_chain = RunnablePassthrough() | {"question": itemgetter("question")} | {
-                        "context_ojk"       :   retriever_ojk | retriever_to_list,
-                        "context_bi"        :   retriever_bi | retriever_to_list,
-                        "context_sikepo"    :   retriever_sikepo_ketentuan | retriever_to_list,
-                        "question"          :   itemgetter("question")
-                        } | {
+    _parallel = RunnableParallel(context_ojk = retriever_ojk, context_bi = retriever_bi, context_sikepo = retriever_sikepo_ketentuan, question = RunnablePassthrough())
+    
+    ketentuan_chain = RunnablePassthrough() | itemgetter("question") | _parallel | {
                         "rewrited question" :   itemgetter("question"),
                         "context"           :   RunnableLambda(merge_context),
                         "answer"            :   QA_SYSTEM_PROMPT | llm_model | StrOutputParser()
