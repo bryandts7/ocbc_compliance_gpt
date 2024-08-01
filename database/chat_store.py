@@ -30,18 +30,12 @@ class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
     def messages(self) -> List[BaseMessage]:
         # Retrieve only the last k pairs of messages in the original order
         all_messages = super().messages
-        message_pairs = []
-        for i in range(0, len(all_messages) - 1, 2):
-            if isinstance(all_messages[i], HumanMessage) and isinstance(all_messages[i+1], AIMessage):
-                message_pairs.append((all_messages[i], all_messages[i+1]))
+        human_messages = [msg for msg in all_messages if isinstance(msg, HumanMessage)]
+        
+        # Take the last k Human messages
+        last_k_human_messages = human_messages[-self.k:]
 
-        # Take the last k pairs
-        last_k_pairs = message_pairs[-self.k:]
-
-        # Flatten the pairs back into a list
-        limited_messages = [msg for pair in last_k_pairs for msg in pair]
-
-        return limited_messages
+        return last_k_human_messages
 
 
 class ElasticChatStore:
@@ -123,19 +117,12 @@ class LimitedPostgresChatMessageHistory(PostgresChatMessageHistory):
     def messages(self) -> List[BaseMessage]:
         # Retrieve only the last k pairs of messages in the original order
         all_messages = super().messages
-        message_pairs = []
-        for i in range(0, len(all_messages) - 1, 2):
-            if isinstance(all_messages[i], HumanMessage) and isinstance(all_messages[i+1], AIMessage):
-                message_pairs.append((all_messages[i], all_messages[i+1]))
+        human_messages = [msg for msg in all_messages if isinstance(msg, HumanMessage)]
+        
+        # Take the last k Human messages
+        last_k_human_messages = human_messages[-self.k:]
 
-        # Take the last k pairs
-        last_k_pairs = message_pairs[-self.k:]
-
-        # Flatten the pairs back into a list
-        limited_messages = [msg for pair in last_k_pairs for msg in pair]
-
-        return limited_messages
-
+        return last_k_human_messages
 
 class PostgresChatStore:
     """A store for managing chat histories using PostgreSQL."""
@@ -263,18 +250,12 @@ class LimitedRedisChatMessageHistory(RedisChatMessageHistory):
     def messages(self) -> List[BaseMessage]:
         # Retrieve only the last k pairs of messages in the original order
         all_messages = super().messages
-        message_pairs = []
-        for i in range(0, len(all_messages) - 1, 2):
-            if isinstance(all_messages[i], HumanMessage) and isinstance(all_messages[i+1], AIMessage):
-                message_pairs.append((all_messages[i], all_messages[i+1]))
+        human_messages = [msg for msg in all_messages if isinstance(msg, HumanMessage)]
+        
+        # Take the last k Human messages
+        last_k_human_messages = human_messages[-self.k:]
 
-        # Take the last k pairs
-        last_k_pairs = message_pairs[-self.k:]
-
-        # Flatten the pairs back into a list
-        limited_messages = [msg for pair in last_k_pairs for msg in pair]
-
-        return limited_messages
+        return last_k_human_messages
 
 
 class RedisChatStore:
@@ -345,19 +326,12 @@ class LimitedMongoDBChatMessageHistory(MongoDBChatMessageHistory):
     def messages(self) -> List[BaseMessage]:
         # Retrieve only the last k pairs of messages in the original order
         all_messages = super().messages
-        message_pairs = []
-        for i in range(0, len(all_messages) - 1, 2):
-            if isinstance(all_messages[i], HumanMessage) and isinstance(all_messages[i+1], AIMessage):
-                message_pairs.append((all_messages[i], all_messages[i+1]))
+        human_messages = [msg for msg in all_messages if isinstance(msg, HumanMessage)]
+        
+        # Take the last k Human messages
+        last_k_human_messages = human_messages[-self.k:]
 
-        # Take the last k pairs
-        last_k_pairs = message_pairs[-self.k:]
-
-        # Flatten the pairs back into a list
-        limited_messages = [msg for pair in last_k_pairs for msg in pair]
-
-        return limited_messages
-
+        return last_k_human_messages
 
 class MongoDBChatStore:
     """A store for managing chat histories using MongoDB."""
