@@ -12,19 +12,15 @@ from langchain_core.vectorstores import VectorStore
 # all_documents_file = gzip.open(f'retriever/retriever_bi/all_documents.pkl.gz','rb')
 # all_documents = pickle.load(all_documents_file)
 
-def get_retriever_bi(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, top_n: int = 7, top_k:int = 20, config: dict = {}):
+def get_retriever_bi(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, top_n: int = 7, config: dict = {}):
 
-    top_k = top_k // 2
 
     retriever_similarity = vector_store.as_retriever(
         search_type="similarity", 
-        search_kwargs={"k": top_k}
     )
     retriever_mmr = vector_store.as_retriever(
         search_type="mmr", 
-        search_kwargs={"k": top_k}
     )
-    # retriever_bm25 = BM25Retriever.from_documents(all_documents, k=top_k)
 
 
     # merge retrievers

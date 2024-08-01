@@ -16,8 +16,6 @@ from langchain_core.language_models.base import BaseLanguageModel
 from langchain_core.embeddings import Embeddings
 
 from retriever.retriever_sikepo.self_query_sikepo import self_query_retriever_sikepo
-from retriever.retriever_sikepo.bm25_retriever_sikepo import bm25_retriever_sikepo
-
 
 # ini panggil sesuai vector store saja, jadi gak perlu defin 2 kali
 # misal : lotr_ketentuan_terkait = lotr_siekepo(vector_store=vector_store_ketentuan_terkait, ...)
@@ -27,12 +25,12 @@ def lotr_sikepo(vector_store: VectorStore, llm_model:BaseLanguageModel, embed_mo
     retriever_mmr = vector_store.as_retriever(search_type="mmr")
     retriever_similarity = vector_store.as_retriever(search_type="similarity")
     self_query_retriever = self_query_retriever_sikepo(llm_model=llm_model, vector_store=vector_store)
-    bm25_retriever = bm25_retriever_sikepo() # ini fungsinya belom di define yee, jadi gak bisa dipanggil, define di `retriver/retriever_sikepo/bm25_retriever_sikepo.py
+    # bm25_retriever = bm25_retriever_sikepo() # ini fungsinya belom di define yee, jadi gak bisa dipanggil, define di `retriver/retriever_sikepo/bm25_retriever_sikepo.py
 
-    try:
-        lotr = MergerRetriever(retrievers=[self_query_retriever, retriever_mmr, retriever_similarity])
-    except:
-        lotr = MergerRetriever(retrievers=[retriever_mmr, retriever_similarity, bm25_retriever])
+    # try:
+    lotr = MergerRetriever(retrievers=[self_query_retriever, retriever_mmr, retriever_similarity])
+    # except:
+    #     lotr = MergerRetriever(retrievers=[retriever_mmr, retriever_similarity, bm25_retriever])
 
      # remove redundant documents
     filter = EmbeddingsRedundantFilter(embeddings=embed_model)
