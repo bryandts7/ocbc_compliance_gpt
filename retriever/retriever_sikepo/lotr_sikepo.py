@@ -22,17 +22,17 @@ from retriever.retriever_sikepo.self_query_sikepo import self_query_retriever_si
 # untuk chain di folder terpisah soalnya responsibility nya beda
 
 
-def lotr_sikepo(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, config: dict = {}, top_n: int = 7):
+def lotr_sikepo(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, config: dict = {}, top_n: int = 10):
 
-    retriever_mmr = vector_store.as_retriever(search_type="mmr")
-    retriever_similarity = vector_store.as_retriever(search_type="similarity")
+    retriever_mmr = vector_store.as_retriever(search_type="mmr", search_kwargs={'k': 6, 'lambda_mult': 0.25})
+    retriever_similarity = vector_store.as_retriever(search_type="similarity", search_kwargs={'k': 6})
     self_query_retriever = self_query_retriever_sikepo(
         llm_model=llm_model, vector_store=vector_store)
     # bm25_retriever = bm25_retriever_sikepo() # ini fungsinya belom di define yee, jadi gak bisa dipanggil, define di `retriver/retriever_sikepo/bm25_retriever_sikepo.py
 
     # try:
     lotr = MergerRetriever(
-        retrievers=[self_query_retriever, retriever_mmr])
+        retrievers=[self_query_retriever, retriever_mmr, retriever_similarity])
     # except:
     #     lotr = MergerRetriever(retrievers=[retriever_mmr, retriever_similarity, bm25_retriever])
 

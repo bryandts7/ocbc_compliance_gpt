@@ -57,14 +57,14 @@ graph = neo4j_sikepo.get_graph()
 
 
 # =========== RETRIEVER ===========
-retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_n=7,
+retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_n=10,
                                   llm_model=llm_model, embed_model=embed_model, config=config)
-retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_n=7,
+retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_n=10,
                                 llm_model=llm_model, embed_model=embed_model, config=config)
 retriever_sikepo_ket = lotr_sikepo(
-    vector_store=vector_store_ket, top_n=7, llm_model=llm_model, embed_model=embed_model, config=config)
+    vector_store=vector_store_ket, top_n=10, llm_model=llm_model, embed_model=embed_model, config=config)
 retriever_sikepo_rek = lotr_sikepo(
-    vector_store=vector_store_rek, top_n=7, llm_model=llm_model, embed_model=embed_model, config=config)
+    vector_store=vector_store_rek, top_n=10, llm_model=llm_model, embed_model=embed_model, config=config)
 
 # =========== CHAT STORE ===========
 chat_store = ElasticChatStore(k=3, config=config)

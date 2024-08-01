@@ -1,14 +1,14 @@
 from langchain_core.prompts import PromptTemplate
 
-CONTEXTUALIZE_Q_PROMPT_STR = """Given the following conversation and a follow-up question, \
-rephrase the follow-up question to be a standalone question in its original language. 
-If the follow-up question is not clear, indicate so. 
-If the chat history is not relevant to the follow-up question, please ignore the chat history.
-
-Chat History:
+CONTEXTUALIZE_Q_PROMPT_STR = """Given the following prior request from the users and a new question, \
+rephrase the new question to be a standalone question. 
+If the new question is not clear, indicate so. 
+If the chat history is not relevant to the follow-up question, PLEASE IGNORE the chat history AND DON'T PARAPHRASE THE QUESTION.
+If the question contains some english words, please NEVER TRANSLATE IT to Indonesian. Keep the Indonesian terms in Indonesian and English terms in English.
+Chat History Request from the user:
 {chat_history}
 
-Follow-up Question: {question}
+New Question: {question}
 Standalone Question: """
 
 

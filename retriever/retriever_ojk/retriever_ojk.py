@@ -33,9 +33,11 @@ def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, e
 
     retriever_similarity = vector_store.as_retriever(
         search_type="similarity",
+        search_kwargs={'k': 6}
     )
     retriever_mmr = vector_store.as_retriever(
         search_type="mmr",
+        search_kwargs={'k': 6, 'lambda_mult': 0.25}
     )
 
     # merge retrievers
