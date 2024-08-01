@@ -12,16 +12,15 @@ from langchain_core.vectorstores import VectorStore
 # all_documents_file = gzip.open(f'retriever/retriever_bi/all_documents.pkl.gz','rb')
 # all_documents = pickle.load(all_documents_file)
 
+
 def get_retriever_bi(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, top_n: int = 7, config: dict = {}):
 
-
     retriever_similarity = vector_store.as_retriever(
-        search_type="similarity", 
+        search_type="similarity",
     )
     retriever_mmr = vector_store.as_retriever(
-        search_type="mmr", 
+        search_type="mmr",
     )
-
 
     # merge retrievers
     lotr = MergerRetriever(retrievers=[retriever_similarity, retriever_mmr])
@@ -34,7 +33,8 @@ def get_retriever_bi(vector_store: VectorStore, llm_model: BaseLanguageModel, em
     )
 
     # rerank with Cohere
-    compressor = CohereRerank(cohere_api_key=config['cohere_api_key'], top_n=top_n, model="rerank-multilingual-v3.0")
+    compressor = CohereRerank(
+        cohere_api_key=config['cohere_api_key'], top_n=top_n, model="rerank-multilingual-v3.0")
     retriever = ContextualCompressionRetriever(
         base_compressor=compressor, base_retriever=compression_retriever
     )

@@ -43,6 +43,7 @@ class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
 
         return limited_messages
 
+
 class ElasticChatStore:
     """A store for managing chat histories using Elasticsearch."""
 
@@ -52,7 +53,7 @@ class ElasticChatStore:
         self.password = config["es_password"]
         self.index_name = "chat_history"
         self.k = k
-        
+
         self.es_client = Elasticsearch(
             hosts=self.host,
             basic_auth=(self.user, self.password),
@@ -95,17 +96,18 @@ class ElasticChatStore:
 
     def get_all_history(self) -> Dict[Tuple[str, str], List[BaseMessage]]:
         all_history = {}
-        query = {"query": {"match_all": {}}, "size": 10000}  # Adjust size as needed
+        query = {"query": {"match_all": {}},
+                 "size": 10000}  # Adjust size as needed
         results = self.es_client.search(index=self.index_name, body=query)
-        
+
         for hit in results['hits']['hits']:
             session_id = hit['_source']['session_id']
             user_id, conversation_id = session_id.split(':', 1)
             history = self.get_session_history(user_id, conversation_id)
             all_history[(user_id, conversation_id)] = history.messages
-        
+
         return all_history
-        
+
 
 # ========== POSTGRE ==========
 class LimitedPostgresChatMessageHistory(PostgresChatMessageHistory):
@@ -137,6 +139,7 @@ class LimitedPostgresChatMessageHistory(PostgresChatMessageHistory):
 
 class PostgresChatStore:
     """A store for managing chat histories using PostgreSQL."""
+
     def __init__(self, config: dict, k: int = 5):
         self.base_connection_string = config["postgres_uri"]
         self.db_name = "chatbot_ocbc"
@@ -153,15 +156,16 @@ class PostgresChatStore:
             conn = psycopg2.connect(f"{self.base_connection_string}")
             conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
             cur = conn.cursor()
-            
-            cur.execute(f"SELECT 1 FROM pg_catalog.pg_database WHERE datname = %s", (self.db_name,))
+
+            cur.execute(
+                f"SELECT 1 FROM pg_catalog.pg_database WHERE datname = %s", (self.db_name,))
             exists = cur.fetchone()
             if not exists:
                 cur.execute(f"CREATE DATABASE {self.db_name}")
                 print(f"Database '{self.db_name}' created successfully.")
             else:
                 print(f"Database '{self.db_name}' already exists.")
-            
+
             cur.close()
             conn.close()
         except psycopg2.Error as e:
@@ -184,10 +188,11 @@ class PostgresChatStore:
             conn.commit()
             cur.close()
             conn.close()
-            print(f"Table '{self.table_name}' created successfully (if it didn't exist).")
+            print(
+                f"Table '{self.table_name}' created successfully (if it didn't exist).")
         except psycopg2.Error as e:
             print(f"An error occurred while creating the table: {e}")
-            
+
     def get_session_history(self, user_id: str, conversation_id: str) -> LimitedPostgresChatMessageHistory:
         session_id = f"{user_id}:{conversation_id}"
         history = LimitedPostgresChatMessageHistory(
@@ -203,14 +208,16 @@ class PostgresChatStore:
         session_id = f"{user_id}:{conversation_id}"
         with psycopg2.connect(self.connection_string) as conn:
             with conn.cursor() as cur:
-                cur.execute(f"DELETE FROM {self.table_name} WHERE session_id = %s", (session_id,))
+                cur.execute(
+                    f"DELETE FROM {self.table_name} WHERE session_id = %s", (session_id,))
             conn.commit()
 
     def clear_session_history_by_userid(self, user_id: str) -> None:
         """Clear the session history for a given user."""
         with psycopg2.connect(self.connection_string) as conn:
             with conn.cursor() as cur:
-                cur.execute(f"DELETE FROM {self.table_name} WHERE session_id LIKE %s", (f"{user_id}:%",))
+                cur.execute(
+                    f"DELETE FROM {self.table_name} WHERE session_id LIKE %s", (f"{user_id}:%",))
             conn.commit()
 
     def add_message_to_history(self, user_id: str, conversation_id: str, message: BaseMessage) -> None:
@@ -229,17 +236,20 @@ class PostgresChatStore:
         all_history = {}
         with psycopg2.connect(self.connection_string) as conn:
             with conn.cursor() as cur:
-                cur.execute(f"SELECT DISTINCT session_id FROM {self.table_name}")
+                cur.execute(
+                    f"SELECT DISTINCT session_id FROM {self.table_name}")
                 session_ids = cur.fetchall()
-                
+
         for (session_id,) in session_ids:
             user_id, conversation_id = session_id.split(':', 1)
             history = self.get_session_history(user_id, conversation_id)
             all_history[(user_id, conversation_id)] = history.messages
-        
+
         return all_history
 
 # ========== REDIS ==========
+
+
 class LimitedRedisChatMessageHistory(RedisChatMessageHistory):
     def __init__(self, k: int, *args, **kwargs):
         super().__init__(*args, **kwargs)

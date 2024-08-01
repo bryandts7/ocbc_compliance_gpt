@@ -43,4 +43,3 @@ def create_ojk_chain(qa_system_prompt_str: str, retriever: BaseRetriever, llm_mo
         } | RunnablePassthrough()
     )
     return conversational_qa_with_context_chain
-

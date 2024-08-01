@@ -23,31 +23,36 @@ from constant.bi.prompt import QA_SYSTEM_PROMPT_BI
 from constant.bi.prompt import QA_SYSTEM_PROMPT_BI
 from constant.prompt import CONTEXTUALIZE_Q_PROMPT_STR, QA_SYSTEM_TEMPLATE, QA_SYSTEM_TEMPLATE_COMBINED_ANSWER
 
-def retriever_to_list(results:list):
+
+def retriever_to_list(results: list):
     print(results)
     return str(results)
 
+
 def merge_context(results):
-    merged = results["context_ojk"] + results["context_bi"] + results["context_sikepo"]
+    merged = results["context_ojk"] + \
+        results["context_bi"] + results["context_sikepo"]
     return merged
 
+
 def routing_ketentuan_chain(chain, llm_model):
-    question_router = ketentuan_router_chain(llm_model, KETENTUAN_ANSWERING_PROMPT)
-    result_chain =  RunnablePassthrough() | {
-                        "question": itemgetter("question"), 
-                        "answer": chain,
-                        # "chat_history" : itemgetter("chat_history")
-                     } | { 
-                         "question": itemgetter("question"),
-                         "answer": itemgetter("answer"),
-                         "is_answered": question_router,
-                        #  "chat_history" : itemgetter("chat_history")
-                    } | RunnablePassthrough()
+    question_router = ketentuan_router_chain(
+        llm_model, KETENTUAN_ANSWERING_PROMPT)
+    result_chain = RunnablePassthrough() | {
+        "question": itemgetter("question"),
+        "answer": chain,
+        # "chat_history" : itemgetter("chat_history")
+    } | {
+        "question": itemgetter("question"),
+        "answer": itemgetter("answer"),
+        "is_answered": question_router,
+        #  "chat_history" : itemgetter("chat_history")
+    } | RunnablePassthrough()
     return result_chain
 
 
 def create_sequential_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
-                 graph_chain:GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
+                            graph_chain: GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
     ojk_chain = create_ojk_chain(
         qa_system_prompt_str=QA_SYSTEM_PROMPT_OJK,
         llm_model=llm_model,
@@ -73,21 +78,25 @@ def create_sequential_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam
     )
 
     general_chain = PromptTemplate.from_template(
-    """Answer 'Saya tidak tahu' """
+        """Answer 'Saya tidak tahu' """
     ) | llm_model | StrOutputParser()
 
-    ketentuan_chain =   routing_ketentuan_chain(ojk_chain, llm_model) | RunnableBranch(
-                            (lambda x: "YES" in x["is_answered"], itemgetter("answer") | RunnablePassthrough()),
-                            (lambda x: "NO" in x["is_answered"], routing_ketentuan_chain(bi_chain, llm_model) | RunnableBranch(
-                                (lambda x: "YES" in x["is_answered"], itemgetter("answer") | RunnablePassthrough()),
-                                (lambda x: "NO" in x["is_answered"], routing_ketentuan_chain(sikepo_ketentuan_chain, llm_model) | itemgetter("answer") | RunnablePassthrough()),
-                                general_chain,
-                            )),
-                            general_chain,
-                            
-                        )
+    ketentuan_chain = routing_ketentuan_chain(ojk_chain, llm_model) | RunnableBranch(
+        (lambda x: "YES" in x["is_answered"],
+         itemgetter("answer") | RunnablePassthrough()),
+        (lambda x: "NO" in x["is_answered"], routing_ketentuan_chain(bi_chain, llm_model) | RunnableBranch(
+            (lambda x: "YES" in x["is_answered"], itemgetter(
+                "answer") | RunnablePassthrough()),
+            (lambda x: "NO" in x["is_answered"], routing_ketentuan_chain(
+                sikepo_ketentuan_chain, llm_model) | itemgetter("answer") | RunnablePassthrough()),
+            general_chain,
+        )),
+        general_chain,
 
-    CONTEXTUALIZE_Q_PROMPT = PromptTemplate.from_template(CONTEXTUALIZE_Q_PROMPT_STR)
+    )
+
+    CONTEXTUALIZE_Q_PROMPT = PromptTemplate.from_template(
+        CONTEXTUALIZE_Q_PROMPT_STR)
     _inputs_question = CONTEXTUALIZE_Q_PROMPT | llm_model | StrOutputParser()
 
     question_router = question_router_chain(llm_model, ROUTER_PROMPT)
@@ -102,18 +111,23 @@ def create_sequential_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam
     )
 
     return full_chain
+
 
 def printing(results):
     print(results)
 
 # Still error
+
+
 def create_combined_answer_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
-                          graph_chain:GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
-    CONTEXTUALIZE_Q_PROMPT = PromptTemplate.from_template(CONTEXTUALIZE_Q_PROMPT_STR)
+                                 graph_chain: GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
+    CONTEXTUALIZE_Q_PROMPT = PromptTemplate.from_template(
+        CONTEXTUALIZE_Q_PROMPT_STR)
     _inputs_question = CONTEXTUALIZE_Q_PROMPT | llm_model | StrOutputParser()
 
     question_router = question_router_chain(llm_model, ROUTER_PROMPT)
-    QA_SYSTEM_PROMPT = PromptTemplate(input_variables=["answer_ojk", "answer_bi", "answer_sikepo", "question"], template=QA_SYSTEM_TEMPLATE_COMBINED_ANSWER)
+    QA_SYSTEM_PROMPT = PromptTemplate(input_variables=[
+                                      "answer_ojk", "answer_bi", "answer_sikepo", "question"], template=QA_SYSTEM_TEMPLATE_COMBINED_ANSWER)
 
     ojk_chain = create_ojk_chain(
         qa_system_prompt_str=QA_SYSTEM_PROMPT_OJK,
@@ -139,27 +153,27 @@ def create_combined_answer_chain(retriever_ojk: BaseRetriever, retriever_sikepo_
         retriever=retriever_sikepo_rekam,
     )
     general_chain = PromptTemplate.from_template(
-    """Answer 'Saya tidak tahu' """
+        """Answer 'Saya tidak tahu' """
     ) | llm_model | StrOutputParser()
 
     ketentuan_chain = RunnablePassthrough() | {"question": itemgetter("question")} | {
-                        "chain_ojk"         :   ojk_chain ,
-                        "chain_bi"          :   sikepo_ketentuan_chain,
-                        "chain_sikepo"      :   sikepo_ketentuan_chain,
-                        "question"          :   itemgetter("question")
-                        } | {
-                        "answer_ojk"        :   itemgetter("chain_ojk") | RunnablePassthrough() | itemgetter("answer") | RunnablePassthrough(),
-                        "context_ojk"       :   itemgetter("chain_ojk") | RunnablePassthrough() | itemgetter("context") | RunnablePassthrough(),
-                        "answer_bi"         :   itemgetter("chain_bi") | RunnablePassthrough() | itemgetter("answer") | RunnablePassthrough(),
-                        "context_bi"        :   itemgetter("chain_bi") | RunnablePassthrough() | itemgetter("context") | RunnablePassthrough(),
-                        "answer_sikepo"     :   itemgetter("chain_sikepo") | RunnablePassthrough() |  itemgetter("answer") | RunnablePassthrough(),
-                        "context_sikepo"    :   itemgetter("chain_sikepo") | RunnablePassthrough() | itemgetter("context") | RunnablePassthrough(),
-                        "question"          :   itemgetter("question")
-                         }  | {
-                        "rewrited question" :   itemgetter("question"),
-                        "context"           :   RunnableLambda(merge_context),
-                        "answer"            :   QA_SYSTEM_PROMPT | llm_model | StrOutputParser()
-                        }
+        "chain_ojk":   ojk_chain,
+        "chain_bi":   sikepo_ketentuan_chain,
+        "chain_sikepo":   sikepo_ketentuan_chain,
+        "question":   itemgetter("question")
+    } | {
+        "answer_ojk":   itemgetter("chain_ojk") | RunnablePassthrough() | itemgetter("answer") | RunnablePassthrough(),
+        "context_ojk":   itemgetter("chain_ojk") | RunnablePassthrough() | itemgetter("context") | RunnablePassthrough(),
+        "answer_bi":   itemgetter("chain_bi") | RunnablePassthrough() | itemgetter("answer") | RunnablePassthrough(),
+        "context_bi":   itemgetter("chain_bi") | RunnablePassthrough() | itemgetter("context") | RunnablePassthrough(),
+        "answer_sikepo":   itemgetter("chain_sikepo") | RunnablePassthrough() | itemgetter("answer") | RunnablePassthrough(),
+        "context_sikepo":   itemgetter("chain_sikepo") | RunnablePassthrough() | itemgetter("context") | RunnablePassthrough(),
+        "question":   itemgetter("question")
+    } | {
+        "rewrited question":   itemgetter("question"),
+        "context":   RunnableLambda(merge_context),
+        "answer":   QA_SYSTEM_PROMPT | llm_model | StrOutputParser()
+    }
 
     full_chain = _inputs_question | {
         "result": question_router | StrOutputParser(),
@@ -172,16 +186,19 @@ def create_combined_answer_chain(retriever_ojk: BaseRetriever, retriever_sikepo_
 
     return full_chain
 
+
 def create_combined_context_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
-                          graph_chain:GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
-    
-    CONTEXTUALIZE_Q_PROMPT = PromptTemplate.from_template(CONTEXTUALIZE_Q_PROMPT_STR)
+                                  graph_chain: GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
+
+    CONTEXTUALIZE_Q_PROMPT = PromptTemplate.from_template(
+        CONTEXTUALIZE_Q_PROMPT_STR)
     _inputs_question = CONTEXTUALIZE_Q_PROMPT | llm_model | StrOutputParser()
 
-    QA_SYSTEM_PROMPT = PromptTemplate(input_variables=["context_ojk", "context_bi", "context_sikepo", "question"], template=QA_SYSTEM_TEMPLATE)
+    QA_SYSTEM_PROMPT = PromptTemplate(input_variables=[
+                                      "context_ojk", "context_bi", "context_sikepo", "question"], template=QA_SYSTEM_TEMPLATE)
 
     general_chain = PromptTemplate.from_template(
-    """Answer 'Saya tidak tahu' """
+        """Answer 'Saya tidak tahu' """
     ) | llm_model | StrOutputParser()
 
     sikepo_rekam_chain = create_sikepo_rekam_chain(
@@ -192,13 +209,14 @@ def create_combined_context_chain(retriever_ojk: BaseRetriever, retriever_sikepo
         graph_chain=graph_chain,
         retriever=retriever_sikepo_rekam,
     )
-    _parallel = RunnableParallel(context_ojk = retriever_ojk, context_bi = retriever_bi, context_sikepo = retriever_sikepo_ketentuan, question = RunnablePassthrough())
-    
+    _parallel = RunnableParallel(context_ojk=retriever_ojk, context_bi=retriever_bi,
+                                 context_sikepo=retriever_sikepo_ketentuan, question=RunnablePassthrough())
+
     ketentuan_chain = RunnablePassthrough() | itemgetter("question") | _parallel | {
-                        "rewrited question" :   itemgetter("question"),
-                        "context"           :   RunnableLambda(merge_context),
-                        "answer"            :   QA_SYSTEM_PROMPT | llm_model | StrOutputParser()
-                        }
+        "rewrited question":   itemgetter("question"),
+        "context":   RunnableLambda(merge_context),
+        "answer":   QA_SYSTEM_PROMPT | llm_model | StrOutputParser()
+    }
 
     question_router = question_router_chain(llm_model, ROUTER_PROMPT)
 
@@ -213,9 +231,9 @@ def create_combined_context_chain(retriever_ojk: BaseRetriever, retriever_sikepo
 
     return full_chain
 
-    
+
 # ===== INI MASIH OJK AJA, NTAR GABUNGING SEMUA LOGIC CHAIN NYA DISINI =====
-def create_chain_with_chat_history(chat_store: Union[MongoDBChatStore, RedisChatStore], final_chain:Runnable):
+def create_chain_with_chat_history(chat_store: Union[MongoDBChatStore, RedisChatStore], final_chain: Runnable):
     final_chain = RunnableWithMessageHistory(
         final_chain,
         get_session_history=chat_store.get_session_history,

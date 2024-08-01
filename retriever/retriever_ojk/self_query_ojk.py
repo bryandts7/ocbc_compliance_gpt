@@ -50,6 +50,3 @@ document_content_description = "The content of the document"
 # Create query constructor
 def self_query_ojk(llm_model: BaseLanguageModel, vector_store: VectorStore, search_type: str = "similarity") -> SelfQueryRetriever:
     return self_query(llm_model, vector_store, document_content_description, metadata_field_info, search_type=search_type)
-
-
-    

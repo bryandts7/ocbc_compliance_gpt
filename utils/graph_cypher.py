@@ -227,9 +227,11 @@ class GraphCypherQAChain(Chain):
         """Initialize from LLM."""
 
         if not cypher_llm and not llm:
-            raise ValueError("Either `llm` or `cypher_llm` parameters must be provided")
+            raise ValueError(
+                "Either `llm` or `cypher_llm` parameters must be provided")
         if not qa_llm and not llm:
-            raise ValueError("Either `llm` or `qa_llm` parameters must be provided")
+            raise ValueError(
+                "Either `llm` or `qa_llm` parameters must be provided")
         if cypher_llm and qa_llm and llm:
             raise ValueError(
                 "You can specify up to two of 'cypher_llm', 'qa_llm'"
@@ -271,9 +273,11 @@ class GraphCypherQAChain(Chain):
                 )
                 qa_chain = response_prompt | qa_llm | StrOutputParser()  # type: ignore
             except (NotImplementedError, AttributeError):
-                raise ValueError("Provided LLM does not support native tools/functions")
+                raise ValueError(
+                    "Provided LLM does not support native tools/functions")
         else:
-            qa_chain = LLMChain(llm=qa_llm, **use_qa_llm_kwargs)  # type: ignore[arg-type]
+            # type: ignore[arg-type]
+            qa_chain = LLMChain(llm=qa_llm, **use_qa_llm_kwargs)
 
         cypher_generation_chain = LLMChain(
             llm=cypher_llm or llm,  # type: ignore[arg-type]
@@ -320,7 +324,7 @@ class GraphCypherQAChain(Chain):
         intermediate_steps: List = []
 
         generated_cypher = self.cypher_generation_chain.run(
-            {"question": question, "schema": self.graph_schema, "history":history}, callbacks=callbacks
+            {"question": question, "schema": self.graph_schema, "history": history}, callbacks=callbacks
         )
 
         # Extract Cypher code if it is wrapped in backticks
@@ -330,7 +334,8 @@ class GraphCypherQAChain(Chain):
         if self.cypher_query_corrector:
             generated_cypher = self.cypher_query_corrector(generated_cypher)
 
-        _run_manager.on_text("Generated Cypher:", end="\n", verbose=self.verbose)
+        _run_manager.on_text("Generated Cypher:",
+                             end="\n", verbose=self.verbose)
         _run_manager.on_text(
             generated_cypher, color="green", end="\n", verbose=self.verbose
         )
@@ -347,7 +352,8 @@ class GraphCypherQAChain(Chain):
         if self.return_direct:
             final_result = context
         else:
-            _run_manager.on_text("Full Context:", end="\n", verbose=self.verbose)
+            _run_manager.on_text("Full Context:", end="\n",
+                                 verbose=self.verbose)
             _run_manager.on_text(
                 str(context), color="green", end="\n", verbose=self.verbose
             )

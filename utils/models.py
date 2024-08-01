@@ -12,9 +12,11 @@ class ModelName(Enum):
     OPENAI = 'openai'
     AZURE_OPENAI = 'azure_openai'
 
+
 class LLMModelName(Enum):
     GPT_35_TURBO = 'gpt-3.5-turbo'
     GPT_4O_MINI = 'gpt-4o-mini'
+
 
 class EmbeddingModelName(Enum):
     EMBEDDING_ADA = 'ada'
@@ -41,7 +43,7 @@ def get_openai_models(api_key: str, llm_model_name: LLMModelName, embedding_mode
     else:
         # throw error
         raise ValueError("Model not supported in OpenAI")
-        
+
     if embedding_model_name == EmbeddingModelName.EMBEDDING_ADA:
         embedding_llm = OpenAIEmbeddings(
             api_key=api_key,
@@ -71,7 +73,7 @@ def get_azure_openai_models(azure_endpoint: str, azure_deployment: str, api_vers
     else:
         # throw error
         raise ValueError("Model not supported in Azure OpenAI")
-    
+
     if embedding_model_name == EmbeddingModelName.EMBEDDING_ADA:
         embedding_llm = AzureOpenAIEmbeddings(
             azure_endpoint=azure_endpoint,
@@ -89,7 +91,6 @@ def get_azure_openai_models(azure_endpoint: str, azure_deployment: str, api_vers
     else:
         # throw error
         raise ValueError("Model not supported in Azure OpenAI")
-
 
     return llm, embedding_llm
 

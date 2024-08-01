@@ -6,6 +6,7 @@ from langchain_core.retrievers import BaseRetriever
 from utils.models import ModelName
 from langchain.chains.graph_qa.cypher import GraphCypherQAChain
 
+
 def create_sikepo_ketentuan_chain(qa_system_prompt_str: str, retriever: BaseRetriever, llm_model: ModelName):
     _context_chain = RunnablePassthrough() | itemgetter("question") | {
         "context": retriever,
@@ -24,13 +25,15 @@ def create_sikepo_ketentuan_chain(qa_system_prompt_str: str, retriever: BaseRetr
     return conversational_qa_with_context_chain
 
 
-def create_sikepo_rekam_chain(qa_system_prompt_str: str, rekam_jejak_context:str, retriever: BaseRetriever, graph_chain:GraphCypherQAChain, llm_model: ModelName):
+def create_sikepo_rekam_chain(qa_system_prompt_str: str, rekam_jejak_context: str, retriever: BaseRetriever, graph_chain: GraphCypherQAChain, llm_model: ModelName):
     QA_SYSTEM_PROMPT_REKAM_STR = qa_system_prompt_str
     REKAM_JEJAK_CONTEXT = rekam_jejak_context
     QA_PROMPT = ChatPromptTemplate.from_template(QA_SYSTEM_PROMPT_REKAM_STR)
-    CONTEXT_PROMPT = PromptTemplate(input_variables=["unstructured", "structured"], template=REKAM_JEJAK_CONTEXT)
+    CONTEXT_PROMPT = PromptTemplate(
+        input_variables=["unstructured", "structured"], template=REKAM_JEJAK_CONTEXT)
 
-    _parallel_runnable = RunnableParallel(structured=graph_chain, unstructured = itemgetter("question")| RunnablePassthrough() | retriever)
+    _parallel_runnable = RunnableParallel(structured=graph_chain, unstructured=itemgetter(
+        "question") | RunnablePassthrough() | retriever)
     _context_chain = RunnablePassthrough() | itemgetter("question") | {
         "question": RunnablePassthrough(),
         "query": RunnablePassthrough()
@@ -47,4 +50,3 @@ def create_sikepo_rekam_chain(qa_system_prompt_str: str, rekam_jejak_context:str
         } | RunnablePassthrough()
     )
     return conversational_qa_with_context_chain
-

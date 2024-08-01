@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 # for local testing
+
+
 def get_config():
     openai_api_key = os.getenv("OPENAI_KEY")
     azure_api_key = os.getenv("AZURE_OPENAI_KEY")
@@ -54,6 +56,7 @@ def get_config():
 
 # for deployment
 
+
 def get_config_streamlit():
     openai_api_key = st.secrets["openai_key"]
     azure_api_key = st.secrets["azure_openai_key"]
@@ -100,4 +103,3 @@ def get_config_streamlit():
         "es_username": es_username,
         "es_password": es_password
     }
-

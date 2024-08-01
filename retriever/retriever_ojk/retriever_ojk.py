@@ -20,26 +20,27 @@ from retriever.retriever_ojk.self_query_ojk import self_query_ojk
 def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, top_n: int = 7, config: dict = {}):
 
     retriever_self_query_similarity = self_query_ojk(
-        llm_model=llm_model, 
-        vector_store=vector_store, 
-        search_type="similarity", 
+        llm_model=llm_model,
+        vector_store=vector_store,
+        search_type="similarity",
     )
 
     retriever_self_query_mmr = self_query_ojk(
-        llm_model=llm_model, 
-        vector_store=vector_store, 
-        search_type="mmr", 
+        llm_model=llm_model,
+        vector_store=vector_store,
+        search_type="mmr",
     )
 
     retriever_similarity = vector_store.as_retriever(
-        search_type="similarity", 
+        search_type="similarity",
     )
     retriever_mmr = vector_store.as_retriever(
-        search_type="mmr", 
+        search_type="mmr",
     )
 
     # merge retrievers
-    lotr = MergerRetriever(retrievers=[retriever_self_query_similarity, retriever_self_query_mmr, retriever_similarity, retriever_mmr])
+    lotr = MergerRetriever(retrievers=[retriever_self_query_similarity,
+                           retriever_self_query_mmr, retriever_similarity, retriever_mmr])
     # lotr = MergerRetriever(retrievers=[retriever_similarity, retriever_mmr])
 
     # remove redundant documents
@@ -50,7 +51,8 @@ def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, e
     )
 
     # rerank with Cohere
-    compressor = CohereRerank(cohere_api_key=config['cohere_api_key'], top_n=top_n, model="rerank-multilingual-v3.0")
+    compressor = CohereRerank(
+        cohere_api_key=config['cohere_api_key'], top_n=top_n, model="rerank-multilingual-v3.0")
     retriever = ContextualCompressionRetriever(
         base_compressor=compressor, base_retriever=compression_retriever
     )
