@@ -30,7 +30,7 @@ def create_sikepo_rekam_chain(qa_system_prompt_str: str, rekam_jejak_context:str
     QA_PROMPT = ChatPromptTemplate.from_template(QA_SYSTEM_PROMPT_REKAM_STR)
     CONTEXT_PROMPT = PromptTemplate(input_variables=["unstructured", "structured"], template=REKAM_JEJAK_CONTEXT)
 
-    _parallel_runnable = RunnableParallel(structured=graph_chain)
+    _parallel_runnable = RunnableParallel(structured=graph_chain, unstructured = itemgetter("question")| RunnablePassthrough() | retriever)
     _context_chain = RunnablePassthrough() | itemgetter("question") | {
         "question": RunnablePassthrough(),
         "query": RunnablePassthrough()

@@ -14,6 +14,9 @@ from chain.rag_chain import create_chain_with_chat_history, create_sequential_ch
 from retriever.retriever_sikepo.graph_cypher_retriever import graph_rag_chain
 from chain.rag_chain import get_response
 
+import nest_asyncio
+nest_asyncio.apply()
+
 import warnings
 warnings.filterwarnings("ignore")
 
