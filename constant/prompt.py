@@ -77,5 +77,8 @@ LLM Answer from SIKEPO Website:{answer_sikepo}
 LLM Answer from OJK Website: {answer_ojk}
 LLM Answer from BI Website: {answer_bi}
 
+Please combined all the LLM answers from multiple resources above into new long paragraphs answers to give more context from different data sources.
+If some specific LLM answer says they do not know the answer, NEVER INCLUDE that to the new long answer AND YOU DO NOT NEED TO SPECIFY THAT. 
+Furthermore, if answer from OJK or BI have sources, please also include it into the new long paragraphs.
 Question: {question}
 """

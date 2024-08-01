@@ -103,6 +103,9 @@ def create_sequential_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam
 
     return full_chain
 
+def printing(results):
+    print(results)
+
 # Still error
 def create_combined_answer_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
                           graph_chain:GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
@@ -141,17 +144,18 @@ def create_combined_answer_chain(retriever_ojk: BaseRetriever, retriever_sikepo_
 
     ketentuan_chain = RunnablePassthrough() | {"question": itemgetter("question")} | {
                         "chain_ojk"         :   ojk_chain ,
-                        "chain_bi"          :   bi_chain,
+                        "chain_bi"          :   sikepo_ketentuan_chain,
                         "chain_sikepo"      :   sikepo_ketentuan_chain,
                         "question"          :   itemgetter("question")
                         } | {
-                        "answer_ojk"        :   itemgetter("chain_ojk") | itemgetter("answer"),
-                        "context_ojk"       :   itemgetter("chain_ojk") | itemgetter("context"),
-                        "answer_bi"         :   itemgetter("chain_bi") | itemgetter("answer"),
-                        "context_bi"        :   itemgetter("chain_bi") | itemgetter("context"),
-                        "answer_sikepo"     :   itemgetter("chain_sikepo") | itemgetter("answer"),
-                        "context_sikepo"    :   itemgetter("chain_sikepo") | itemgetter("context"),
-                        } | {
+                        "answer_ojk"        :   itemgetter("chain_ojk") | RunnablePassthrough() | itemgetter("answer") | RunnablePassthrough(),
+                        "context_ojk"       :   itemgetter("chain_ojk") | RunnablePassthrough() | itemgetter("context") | RunnablePassthrough(),
+                        "answer_bi"         :   itemgetter("chain_bi") | RunnablePassthrough() | itemgetter("answer") | RunnablePassthrough(),
+                        "context_bi"        :   itemgetter("chain_bi") | RunnablePassthrough() | itemgetter("context") | RunnablePassthrough(),
+                        "answer_sikepo"     :   itemgetter("chain_sikepo") | RunnablePassthrough() |  itemgetter("answer") | RunnablePassthrough(),
+                        "context_sikepo"    :   itemgetter("chain_sikepo") | RunnablePassthrough() | itemgetter("context") | RunnablePassthrough(),
+                        "question"          :   itemgetter("question")
+                         }  | {
                         "rewrited question" :   itemgetter("question"),
                         "context"           :   RunnableLambda(merge_context),
                         "answer"            :   QA_SYSTEM_PROMPT | llm_model | StrOutputParser()

@@ -14,6 +14,8 @@ from chain.rag_chain import create_chain_with_chat_history, create_sequential_ch
 from retriever.retriever_sikepo.graph_cypher_retriever import graph_rag_chain
 from chain.rag_chain import get_response
 
+import warnings
+warnings.filterwarnings("ignore")
 
 # =========== CONFIG ===========
 config = get_config()
@@ -24,8 +26,8 @@ CONVERSATION_ID = 'xmriz-2021-07-01-01'
 
 
 # =========== MODEL ===========
-model_name = ModelName.OPENAI
-llm_model, embed_model = get_model(model_name=model_name, config=config, llm_model_name=LLMModelName.GPT_4O_MINI, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
+model_name = ModelName.AZURE_OPENAI
+llm_model, embed_model = get_model(model_name=model_name, config=config, llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
 
 # =========== VECTOR STORE ===========
 index_ojk = ElasticIndexManager(index_name='ojk', embed_model=embed_model, config=config)
@@ -59,7 +61,7 @@ chat_store = ElasticChatStore(k=3, config=config)
 # =========== CHAIN ===========
 graph_chain = graph_rag_chain(llm_model, llm_model, graph=graph)
 
-chain = create_combined_context_chain(
+chain = create_combined_answer_chain(
     llm_model=llm_model,
     graph_chain=graph_chain,
     retriever_ojk=retriever_ojk,
