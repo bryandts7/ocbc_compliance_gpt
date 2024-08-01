@@ -17,9 +17,7 @@ from langchain_core.embeddings import Embeddings
 from retriever.retriever_ojk.self_query_ojk import self_query_ojk
 
 
-def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, top_n: int = 7, top_k:int = 20, config: dict = {}):
-
-    top_k = top_k // 4
+def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, top_n: int = 7, config: dict = {}):
 
     retriever_self_query_similarity = self_query_ojk(
         llm_model=llm_model, 
@@ -35,11 +33,9 @@ def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, e
 
     retriever_similarity = vector_store.as_retriever(
         search_type="similarity", 
-        search_kwargs={"k": top_k}
     )
     retriever_mmr = vector_store.as_retriever(
         search_type="mmr", 
-        search_kwargs={"k": top_k}
     )
 
     # merge retrievers
