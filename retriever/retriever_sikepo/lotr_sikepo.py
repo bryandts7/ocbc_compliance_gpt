@@ -32,19 +32,12 @@ def lotr_sikepo(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_m
 
     # try:
     lotr = MergerRetriever(
-        retrievers=[self_query_retriever, retriever_mmr, retriever_similarity])
+        retrievers=[self_query_retriever, retriever_mmr])
     # except:
     #     lotr = MergerRetriever(retrievers=[retriever_mmr, retriever_similarity, bm25_retriever])
 
     # remove redundant documents
     filter = EmbeddingsRedundantFilter(embeddings=embed_model)
-    # filter_ordered_by_retriever = EmbeddingsClusteringFilter(
-    #     embeddings=embed_model,
-    #     num_clusters=10,
-    #     num_closest=1,
-    #     sorted=True,
-    # )
-
     pipeline = DocumentCompressorPipeline(transformers=[filter])
     compression_retriever = ContextualCompressionRetriever(
         base_compressor=pipeline, base_retriever=lotr
