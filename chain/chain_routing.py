@@ -9,6 +9,8 @@ from constant.sikepo.prompt import ROUTER_PROMPT, KETENTUAN_ANSWERING_PROMPT
 # ====== CHAIN ROUTING ======
 
 # Query of routing
+
+
 class RouteQuery(BaseModel):
     """Route a user query to the most relevant datasource."""
 
@@ -17,9 +19,10 @@ class RouteQuery(BaseModel):
         description="Given a user question choose which datasource would be most relevant for answering their question",
     )
 
+
 def get_string_routing(route):
     return route.datasource
-    
+
 
 # Query of answering
 class RouteQueryAnswer(BaseModel):
@@ -32,9 +35,11 @@ class RouteQueryAnswer(BaseModel):
 
 
 def get_string_answer(route):
-        return route.decision
+    return route.decision
 
 # Router chain
+
+
 def question_router_chain(llm_model: BaseLanguageModel, ROUTING_PROMPT: str = ROUTER_PROMPT):
     llm = llm_model
     structured_llm = llm.with_structured_output(RouteQuery)
@@ -47,9 +52,10 @@ def question_router_chain(llm_model: BaseLanguageModel, ROUTING_PROMPT: str = RO
         ]
     )
 
-    # Define router 
+    # Define router
     router = prompt | structured_llm | RunnableLambda(get_string_routing)
     return router
+
 
 def ketentuan_router_chain(llm_model: BaseLanguageModel, ROUTING_PROMPT: str = KETENTUAN_ANSWERING_PROMPT):
     llm = llm_model
@@ -61,9 +67,9 @@ def ketentuan_router_chain(llm_model: BaseLanguageModel, ROUTING_PROMPT: str = K
             # MessagesPlaceholder(variable_name="history"),
             ("human", "{question}"),
             ("ai", "{answer}")
-        ]   
+        ]
     )
 
-    # Define router 
+    # Define router
     router = prompt | structured_llm | RunnableLambda(get_string_answer)
     return router

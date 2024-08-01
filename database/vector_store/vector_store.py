@@ -17,6 +17,7 @@ from langchain_community.vectorstores import ElasticsearchStore
 
 import os
 
+
 class VectorIndexManager(ABC):
     def __init__(self, embed_model, index_name="ojk"):
         self.embed_model = embed_model
@@ -43,7 +44,7 @@ class ElasticIndexManager(VectorIndexManager):
         self.host = config["es_uri"]
         self.user = config["es_username"]
         self.password = config["es_password"]
-        
+
         self.es_client = Elasticsearch(
             hosts=self.host,
             basic_auth=(self.user, self.password),
@@ -51,7 +52,7 @@ class ElasticIndexManager(VectorIndexManager):
             verify_certs=False,
             retry_on_timeout=True,
         )
-        
+
     def delete_index(self):
         log_path = './database/store_logs'
         try:
@@ -64,7 +65,7 @@ class ElasticIndexManager(VectorIndexManager):
 
     def store_vector_index(self, docs, batch_size=200):
         log_path = './database/store_logs'
-        
+
         if os.path.exists(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt')):
             with open(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt'), 'r') as f:
                 start_split_idx = int(f.read())
@@ -114,6 +115,8 @@ class ElasticIndexManager(VectorIndexManager):
         return self.vector_store
 
 # ================== POSTGRE ==================
+
+
 class PostgresIndexManager(VectorIndexManager):
     def __init__(self, embed_model: Embeddings, index_name: str = "ojk", config: dict = {}):
         super().__init__(embed_model, index_name)
@@ -128,10 +131,11 @@ class PostgresIndexManager(VectorIndexManager):
         conn = psycopg2.connect(f"{self.base_connection_string}")
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
-        
+
         try:
             # Check if database exists
-            cur.execute(f"SELECT 1 FROM pg_catalog.pg_database WHERE datname = %s", (self.db_name,))
+            cur.execute(
+                f"SELECT 1 FROM pg_catalog.pg_database WHERE datname = %s", (self.db_name,))
             exists = cur.fetchone()
             if not exists:
                 cur.execute(f"CREATE DATABASE {self.db_name}")
@@ -148,12 +152,13 @@ class PostgresIndexManager(VectorIndexManager):
         conn = psycopg2.connect(self.connection_string)
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
-        
+
         try:
             cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
             print("Vector extension created successfully (if it didn't exist).")
         except Exception as e:
-            print(f"An error occurred while creating the vector extension: {e}")
+            print(
+                f"An error occurred while creating the vector extension: {e}")
 
         cur.close()
         conn.close()
@@ -174,7 +179,7 @@ class PostgresIndexManager(VectorIndexManager):
 
     def store_vector_index(self, docs, batch_size: int = 200):
         log_path = './database/store_logs'
-        
+
         if os.path.exists(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt')):
             with open(os.path.join(log_path, f'start_store_idx_{self.index_name}.txt'), 'r') as f:
                 start_split_idx = int(f.read())
@@ -224,6 +229,8 @@ class PostgresIndexManager(VectorIndexManager):
         return self.vector_store
 
 # ================== REDIS ==================
+
+
 class RedisIndexManager(VectorIndexManager):
     def __init__(self, embed_model: Embeddings, index_name="ojk", config: dict = {}, db_id: int = 0):
         super().__init__(embed_model, index_name)
@@ -236,8 +243,10 @@ class RedisIndexManager(VectorIndexManager):
         log_path = './database/store_logs'
         # Delete the index
         try:
-            self.redis_client.ft(self.index_name).dropindex(delete_documents=True)
-            print(f"Deleted index '{self.index_name}' and its associated documents.")
+            self.redis_client.ft(self.index_name).dropindex(
+                delete_documents=True)
+            print(
+                f"Deleted index '{self.index_name}' and its associated documents.")
             with open(os.path.join(log_path, 'start_store_idx_' + self.index_name + '.txt'), 'w') as f:
                 f.write(str(0))
         except redis.exceptions.ResponseError as e:
@@ -269,10 +278,9 @@ class RedisIndexManager(VectorIndexManager):
                 embedding=self.embed_model,
                 redis_url=self.redis_uri,
                 index_name=self.index_name
-                
-            )   
+
+            )
             time.sleep(4)
-            
 
             if len(docs) <= batch_size:
                 with open(os.path.join(log_path, 'start_store_idx_' + self.index_name + '.txt'), 'w') as f:
@@ -283,14 +291,16 @@ class RedisIndexManager(VectorIndexManager):
                     f.write(str(batch_size))
                 print(f"Loaded 1-{batch_size} documents")
             start_split_idx = batch_size
-        
-            self.vector_store.write_schema('./database/vector_store/redis_schema/vectorstore_redis_schema_' + self.index_name + '.yaml')
+
+            self.vector_store.write_schema(
+                './database/vector_store/redis_schema/vectorstore_redis_schema_' + self.index_name + '.yaml')
         else:
             self.vector_store = Redis.from_existing_index(
-                index_name=self.index_name, 
-                redis_url=self.redis_uri, 
+                index_name=self.index_name,
+                redis_url=self.redis_uri,
                 embedding=self.embed_model,
-                schema="./database/vector_store/redis_schema/vectorstore_redis_schema_" + self.index_name + '.yaml',
+                schema="./database/vector_store/redis_schema/vectorstore_redis_schema_" +
+                self.index_name + '.yaml',
             )
 
         for i in range(start_split_idx, len(docs), batch_size):
@@ -304,14 +314,14 @@ class RedisIndexManager(VectorIndexManager):
 
     def load_vector_index(self):
         self.vector_store = Redis.from_existing_index(
-            index_name=self.index_name, 
-            redis_url=self.redis_uri, 
+            index_name=self.index_name,
+            redis_url=self.redis_uri,
             embedding=self.embed_model,
-            schema="./database/vector_store/redis_schema/vectorstore_redis_schema_" + self.index_name + '.yaml',
+            schema="./database/vector_store/redis_schema/vectorstore_redis_schema_" +
+            self.index_name + '.yaml',
         )
         print(f"Loaded index '{self.index_name}'.")
         return self.vector_store
-
 
 
 # ================== PINECONE ==================
@@ -331,7 +341,8 @@ class PineconeIndexManager(VectorIndexManager):
         print("Deleted all keys in the database.")
 
     def _create_index_if_not_exists(self):
-        existing_indexes = [index_info["name"] for index_info in self.pc.list_indexes()]
+        existing_indexes = [index_info["name"]
+                            for index_info in self.pc.list_indexes()]
 
         if self.index_name not in existing_indexes:
             self.pc.create_index(
@@ -346,7 +357,8 @@ class PineconeIndexManager(VectorIndexManager):
     def store_vector_index(self, docs):
         log_path = './logs'
 
-        self.vector_store = PineconeVectorStore(index=self.pc.Index(self.index_name), embedding=self.embed_model)
+        self.vector_store = PineconeVectorStore(
+            index=self.pc.Index(self.index_name), embedding=self.embed_model)
 
         time.sleep(4)
 
@@ -367,12 +379,13 @@ class PineconeIndexManager(VectorIndexManager):
             print(f"Loaded {i+1}-{last_split_idx} documents")
 
     def load_vector_index(self):
-        existing_indexes = [index_info["name"] for index_info in self.pc.list_indexes()]
+        existing_indexes = [index_info["name"]
+                            for index_info in self.pc.list_indexes()]
 
         if self.index_name not in existing_indexes:
             raise ValueError(f"Index {self.index_name} does not exist.")
 
-        self.vector_store = PineconeVectorStore(index=self.pc.Index(self.index_name), embedding=self.embed_model)
+        self.vector_store = PineconeVectorStore(
+            index=self.pc.Index(self.index_name), embedding=self.embed_model)
         print(f"Loaded index '{self.index_name}'.")
         return self.vector_store
-

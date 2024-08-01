@@ -17,16 +17,16 @@ def _format_metadata(metadata):
     """Remove filename from metadata."""
     # check if file_name is in metadata, if so remove it
     removed_metadata = [
-        "standardized_file_name", 
+        "standardized_file_name",
         "standardized_extracted_file_name",
         "file_id",
         "file_name"
-        ]
-    
+    ]
+
     for attribute in removed_metadata:
         if attribute in metadata:
             metadata.pop(attribute, None)
-    
+
     return metadata
 
 

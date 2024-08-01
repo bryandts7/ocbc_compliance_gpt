@@ -1,3 +1,4 @@
+import warnings
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
@@ -17,7 +18,6 @@ from chain.rag_chain import get_response
 import nest_asyncio
 nest_asyncio.apply()
 
-import warnings
 warnings.filterwarnings("ignore")
 
 # =========== CONFIG ===========
@@ -30,21 +30,26 @@ CONVERSATION_ID = 'xmriz-2021-07-01-01'
 
 # =========== MODEL ===========
 model_name = ModelName.OPENAI
-llm_model, embed_model = get_model(model_name=model_name, config=config, llm_model_name=LLMModelName.GPT_4O_MINI, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
+llm_model, embed_model = get_model(model_name=model_name, config=config,
+                                   llm_model_name=LLMModelName.GPT_4O_MINI, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
 
 # =========== VECTOR STORE ===========
-index_ojk = ElasticIndexManager(index_name='ojk', embed_model=embed_model, config=config)
+index_ojk = ElasticIndexManager(
+    index_name='ojk', embed_model=embed_model, config=config)
 vector_store_ojk = index_ojk.load_vector_index()
 
 # index_bi = ElasticIndexManager(index_name='bi', embed_model=embed_model, config=config)
 # vector_store_bi = index_bi.load_vector_index()
-index_bi = ElasticIndexManager(index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config)
+index_bi = ElasticIndexManager(
+    index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config)
 vector_store_bi = index_bi.load_vector_index()
 
-index_sikepo_ket = ElasticIndexManager(index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config)
+index_sikepo_ket = ElasticIndexManager(
+    index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config)
 vector_store_ket = index_sikepo_ket.load_vector_index()
 
-index_sikepo_rek = ElasticIndexManager(index_name='sikepo-rekam-jejak', embed_model=embed_model, config=config)
+index_sikepo_rek = ElasticIndexManager(
+    index_name='sikepo-rekam-jejak', embed_model=embed_model, config=config)
 vector_store_rek = index_sikepo_rek.load_vector_index()
 
 neo4j_sikepo = Neo4jGraphStore(config=config)
@@ -52,10 +57,14 @@ graph = neo4j_sikepo.get_graph()
 
 
 # =========== RETRIEVER ===========
-retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_n=7, llm_model=llm_model, embed_model=embed_model, config=config)
-retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_n=7, llm_model=llm_model, embed_model=embed_model, config=config)
-retriever_sikepo_ket = lotr_sikepo(vector_store=vector_store_ket, top_n=7, llm_model=llm_model, embed_model=embed_model, config=config)
-retriever_sikepo_rek = lotr_sikepo(vector_store=vector_store_rek, top_n=7, llm_model=llm_model, embed_model=embed_model, config=config)
+retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_n=7,
+                                  llm_model=llm_model, embed_model=embed_model, config=config)
+retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_n=7,
+                                llm_model=llm_model, embed_model=embed_model, config=config)
+retriever_sikepo_ket = lotr_sikepo(
+    vector_store=vector_store_ket, top_n=7, llm_model=llm_model, embed_model=embed_model, config=config)
+retriever_sikepo_rek = lotr_sikepo(
+    vector_store=vector_store_rek, top_n=7, llm_model=llm_model, embed_model=embed_model, config=config)
 
 # =========== CHAT STORE ===========
 chat_store = ElasticChatStore(k=3, config=config)
@@ -81,6 +90,7 @@ chain_history = create_chain_with_chat_history(
 # =========== MAIN ===========
 app = FastAPI()
 
+
 class ChatRequest(BaseModel):
     user_input: str
 
@@ -89,13 +99,15 @@ class ChatResponse(BaseModel):
     user_message: str
     ai_response: str
 
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.post("/chat/", response_model=ChatResponse)
 async def chat_input(request: ChatRequest):
@@ -107,12 +119,12 @@ async def chat_input(request: ChatRequest):
     ai_response = ""
 
     response = get_response(
-                    chain=chain_history,
-                    question=user_message,
-                    user_id=USER_ID,
-                    conversation_id=CONVERSATION_ID
-                )
-    
+        chain=chain_history,
+        question=user_message,
+        user_id=USER_ID,
+        conversation_id=CONVERSATION_ID
+    )
+
     print(response)
     # ai_response = response['answer']['answer'].replace("\n", "<br>")
     ai_response = response['answer'].replace("\n", "<br>")

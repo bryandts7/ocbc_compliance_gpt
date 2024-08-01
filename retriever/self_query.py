@@ -12,7 +12,7 @@ from langchain_core.prompts import BasePromptTemplate
 from constant.prompt import DEFAULT_SCHEMA_PROMPT
 
 
-def self_query(llm_model: BaseLanguageModel, vector_store: VectorStore, document_content_description:str, metadata_field_info: Sequence[Union[AttributeInfo, dict]], search_type: str = "similarity", schema_prompt: BasePromptTemplate = DEFAULT_SCHEMA_PROMPT  ) -> SelfQueryRetriever:
+def self_query(llm_model: BaseLanguageModel, vector_store: VectorStore, document_content_description: str, metadata_field_info: Sequence[Union[AttributeInfo, dict]], search_type: str = "similarity", schema_prompt: BasePromptTemplate = DEFAULT_SCHEMA_PROMPT) -> SelfQueryRetriever:
     prompt = get_query_constructor_prompt(
         document_contents=document_content_description,
         attribute_info=metadata_field_info,
