@@ -38,10 +38,8 @@ index_ojk = ElasticIndexManager(
     index_name='ojk', embed_model=embed_model, config=config)
 vector_store_ojk = index_ojk.load_vector_index()
 
-# index_bi = ElasticIndexManager(index_name='bi', embed_model=embed_model, config=config)
-# vector_store_bi = index_bi.load_vector_index()
 index_bi = ElasticIndexManager(
-    index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config)
+    index_name='bi', embed_model=embed_model, config=config)
 vector_store_bi = index_bi.load_vector_index()
 
 index_sikepo_ket = ElasticIndexManager(
@@ -57,14 +55,14 @@ graph = neo4j_sikepo.get_graph()
 
 
 # =========== RETRIEVER ===========
-retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_n=10,
+retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_n=7,
                                   llm_model=llm_model, embed_model=embed_model, config=config)
-retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_n=10,
+retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_n=7,
                                 llm_model=llm_model, embed_model=embed_model, config=config)
 retriever_sikepo_ket = lotr_sikepo(
-    vector_store=vector_store_ket, top_n=10, llm_model=llm_model, embed_model=embed_model, config=config)
+    vector_store=vector_store_ket, top_n=7, llm_model=llm_model, embed_model=embed_model, config=config)
 retriever_sikepo_rek = lotr_sikepo(
-    vector_store=vector_store_rek, top_n=10, llm_model=llm_model, embed_model=embed_model, config=config)
+    vector_store=vector_store_rek, top_n=7, llm_model=llm_model, embed_model=embed_model, config=config)
 
 # =========== CHAT STORE ===========
 chat_store = ElasticChatStore(k=3, config=config)
@@ -77,7 +75,7 @@ chain = create_combined_answer_chain(
     llm_model=llm_model,
     graph_chain=graph_chain,
     retriever_ojk=retriever_ojk,
-    retriever_bi=retriever_sikepo_ket,
+    retriever_bi=retriever_bi,
     retriever_sikepo_ketentuan=retriever_sikepo_ket,
     retriever_sikepo_rekam=retriever_sikepo_rek,
 )

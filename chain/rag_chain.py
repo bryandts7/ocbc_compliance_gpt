@@ -157,7 +157,7 @@ def create_combined_answer_chain(retriever_ojk: BaseRetriever, retriever_sikepo_
 
     ketentuan_chain = RunnablePassthrough() | {"question": itemgetter("question")} | {
         "chain_ojk":   ojk_chain,
-        "chain_bi":   sikepo_ketentuan_chain,
+        "chain_bi":   bi_chain,
         "chain_sikepo":   sikepo_ketentuan_chain,
         "question":   itemgetter("question")
     } | {
