@@ -30,6 +30,7 @@ class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
     def messages(self) -> List[BaseMessage]:
         # Retrieve only the last k pairs of messages in the original order
         all_messages = super().messages
+
         human_messages = [msg for msg in all_messages if isinstance(msg, HumanMessage)]
         
         # Take the last k Human messages
