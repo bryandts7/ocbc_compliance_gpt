@@ -12,7 +12,7 @@ from retriever.retriever_bi.retriever_bi import get_retriever_bi
 from retriever.retriever_sikepo.lotr_sikepo import lotr_sikepo
 from database.chat_store import RedisChatStore, ElasticChatStore
 from chain.rag_chain import create_chain_with_chat_history, create_sequential_chain, create_combined_answer_chain, create_combined_context_chain
-from retriever.retriever_sikepo.graph_cypher_retriever import graph_rag_chain
+from chain.chain_sikepo.graph_cypher_sikepo_chain import graph_rag_chain
 from chain.rag_chain import get_response
 
 import nest_asyncio
