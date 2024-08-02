@@ -29,9 +29,9 @@ CONVERSATION_ID = 'xmriz-2021-07-01-01'
 
 
 # =========== MODEL ===========
-model_name = ModelName.OPENAI
+model_name = ModelName.AZURE_OPENAI
 llm_model, embed_model = get_model(model_name=model_name, config=config,
-                                   llm_model_name=LLMModelName.GPT_4O_MINI, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
+                                   llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
 
 # =========== VECTOR STORE ===========
 index_ojk = ElasticIndexManager(
@@ -55,14 +55,14 @@ graph = neo4j_sikepo.get_graph()
 
 
 # =========== RETRIEVER ===========
-retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_n=7,
+retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_n=5,
                                   llm_model=llm_model, embed_model=embed_model, config=config)
-retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_n=7,
+retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_n=5,
                                 llm_model=llm_model, embed_model=embed_model, config=config)
 retriever_sikepo_ket = lotr_sikepo(
-    vector_store=vector_store_ket, top_n=7, llm_model=llm_model, embed_model=embed_model, config=config)
+    vector_store=vector_store_ket, top_n=5, llm_model=llm_model, embed_model=embed_model, config=config)
 retriever_sikepo_rek = lotr_sikepo(
-    vector_store=vector_store_rek, top_n=7, llm_model=llm_model, embed_model=embed_model, config=config)
+    vector_store=vector_store_rek, top_n=5, llm_model=llm_model, embed_model=embed_model, config=config)
 
 # =========== CHAT STORE ===========
 chat_store = ElasticChatStore(k=3, config=config)

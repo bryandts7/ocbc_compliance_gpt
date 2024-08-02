@@ -71,14 +71,17 @@ Question: {question}
 
 QA_SYSTEM_TEMPLATE_COMBINED_ANSWER = """
 You are an assistant for question-answering tasks. Use the following pieces answers from LLM Chain from multiple type of retrievers.
-Please do not use your prior knowledge. If the question does not related to the context given, just answer 'Saya tidak tahu mengenai hal tersebut'. 
+Please do not use your prior knowledge.
 
-LLM Answer from SIKEPO Website:{answer_sikepo}
-LLM Answer from OJK Website: {answer_ojk}
-LLM Answer from BI Website: {answer_bi}
+Context:
+SIKEPO Website:{answer_sikepo}
+OJK (Otoritas Jasa Keuangan) Website: {answer_ojk}
+BI (Bank Indonesia) Website: {answer_bi}
 
-Please combined all the LLM answers from multiple resources above into new long paragraphs answers to give more context from different data sources.
-If some specific LLM answer says they do not know the answer, NEVER INCLUDE that to the new long answer AND YOU DO NOT NEED TO SPECIFY THAT. 
-Furthermore, if answer from OJK or BI have sources, please also include it into the new long paragraphs.
+Please use all the context from multiple resources above into new long paragraphs answers to give more context from different data sources.
+If some specific context says they do not know the answer like "Saya tidak tahu", JUST IGNORE IT AND YOU DO NOT NEED TO INCLUDE THAT AND DON'T MENTION ANYTHING REGARDING THAT CONTEXT IN FINAL ANSWER. 
+Furthermore, if answer from OJK or BI have sources in format like this: Source: [regulation_number](file_url), please also include it into the new long paragraphs.
 Question: {question}
+
+Final Answer:
 """
