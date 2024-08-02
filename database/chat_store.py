@@ -43,6 +43,7 @@ class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
                 index=self.index,
                 query={"term": {"session_id": self.session_id}},
                 sort="created_at:desc",
+                size=2*self.k
             )
         except ApiError as err:
             logger.error(f"Could not retrieve messages from Elasticsearch: {err}")
@@ -59,12 +60,12 @@ class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
         # Retrieve only the last k pairs of messages in the original order
         all_messages = messages_from_dict(items)
         human_messages = [msg for msg in all_messages if isinstance(msg, HumanMessage)]
-        
+
         # Take the last k Human messages
         last_k_human_messages = human_messages[:self.k]
-
+        last_k_human_messages.reverse()
         return last_k_human_messages
-
+    
 
 class ElasticChatStore:
     """A store for managing chat histories using Elasticsearch."""
