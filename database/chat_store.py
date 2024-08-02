@@ -1,7 +1,8 @@
 from typing import List, Dict, Tuple
 from langchain.schema import BaseMessage, HumanMessage, AIMessage
 import time
-
+import logging
+import json
 import psycopg2
 from langchain_community.chat_message_histories import PostgresChatMessageHistory
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
@@ -14,7 +15,13 @@ from langchain_community.chat_message_histories import RedisChatMessageHistory
 
 from elasticsearch import Elasticsearch, exceptions as es_exceptions
 from langchain_community.chat_message_histories import ElasticsearchChatMessageHistory
+from langchain_core.messages import (
+    BaseMessage,
+    message_to_dict,
+    messages_from_dict,
+)
 
+logger = logging.getLogger(__name__)
 
 # ========== ELASTICSEARCH ==========
 class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
@@ -28,12 +35,33 @@ class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
 
     @property
     def messages(self) -> List[BaseMessage]:
+        """Retrieve the messages from Elasticsearch"""
+        try:
+            from elasticsearch import ApiError
+
+            result = self.client.search(
+                index=self.index,
+                query={"term": {"session_id": self.session_id}},
+                sort="created_at:desc",
+            )
+        except ApiError as err:
+            logger.error(f"Could not retrieve messages from Elasticsearch: {err}")
+            raise err
+
+        if result and len(result["hits"]["hits"]) > 0:
+            items = [
+                json.loads(document["_source"]["history"])
+                for document in result["hits"]["hits"]
+            ]
+        else:
+            items = []
+
         # Retrieve only the last k pairs of messages in the original order
-        all_messages = super().messages
+        all_messages = messages_from_dict(items)
         human_messages = [msg for msg in all_messages if isinstance(msg, HumanMessage)]
         
         # Take the last k Human messages
-        last_k_human_messages = human_messages[-self.k:]
+        last_k_human_messages = human_messages[:self.k]
 
         return last_k_human_messages
 
