@@ -65,7 +65,7 @@ retriever_sikepo_rek = lotr_sikepo(
     vector_store=vector_store_rek, top_n=5, llm_model=llm_model, embed_model=embed_model, config=config)
 
 # =========== CHAT STORE ===========
-chat_store = ElasticChatStore(k=3, config=config)
+chat_store = ElasticChatStore(k=8, config=config)
 
 
 # =========== CHAIN ===========
