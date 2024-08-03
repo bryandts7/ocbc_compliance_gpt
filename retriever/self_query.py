@@ -6,7 +6,7 @@ from langchain.chains.query_constructor.base import (
 from langchain_core.language_models.base import BaseLanguageModel
 from langchain.retrievers.self_query.base import SelfQueryRetriever
 from langchain_core.vectorstores import VectorStore
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union
+from typing import Sequence, Union
 from langchain_core.prompts import BasePromptTemplate
 
 from constant.prompt import DEFAULT_SCHEMA_PROMPT
