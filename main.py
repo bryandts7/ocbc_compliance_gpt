@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -21,7 +22,11 @@ nest_asyncio.apply()
 warnings.filterwarnings("ignore")
 
 # =========== CONFIG ===========
+security = HTTPBearer()
+
 config = get_config()
+
+CONVERSATION_ID = 'conv_2'
 
 # =========== GLOBAL VARIABLES ===========
 llm_model, embed_model = get_model(model_name=ModelName.AZURE_OPENAI, config=config,
@@ -41,7 +46,8 @@ vector_store_rek = index_sikepo_rek.load_vector_index()
 neo4j_sikepo = Neo4jGraphStore(config=config)
 graph = neo4j_sikepo.get_graph()
 
-chat_store = RedisChatStore(k=3, config=config)
+# chat_store = RedisChatStore(k=3, config=config)
+chat_store = ElasticChatStore(k=3, config=config)
 
 # Initialize retrievers and chains with default model
 retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_n=top_n,
@@ -143,7 +149,7 @@ async def initialize_model(request: ModelRequest):
     )
 
 @app.post("/chat/", response_model=ChatResponse)
-async def chat_input(request: ChatRequest):
+async def chat_input(request: ChatRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
     if not request.user_input:
         raise HTTPException(
             status_code=400, detail="Please enter a valid input")
@@ -151,11 +157,14 @@ async def chat_input(request: ChatRequest):
     user_message = request.user_input
     ai_response = ""
 
+    # Get the user ID from the Authorization header
+    user_id = credentials.credentials
+
     response = get_response(
         chain=chain_history,
         question=user_message,
-        user_id='xmriz',  # Example user_id
-        conversation_id='xmriz-2021-07-01-01'  # Example conversation_id
+        user_id=user_id,
+        conversation_id=CONVERSATION_ID,
     )
 
     ai_response = response['answer'].replace("\n", "<br>")
@@ -167,7 +176,6 @@ async def chat_input(request: ChatRequest):
             "ai_response": ai_response
         }
     )
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=9898)

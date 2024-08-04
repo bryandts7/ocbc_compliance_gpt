@@ -10,7 +10,6 @@ from langchain.chains.graph_qa.cypher import GraphCypherQAChain
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 
-
 from chain.chain_routing import question_router_chain, ketentuan_router_chain
 from chain.chain_ojk.chain_ojk import create_ojk_chain
 from chain.chain_bi.chain_bi import create_bi_chain
