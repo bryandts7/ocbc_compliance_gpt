@@ -26,17 +26,21 @@ security = HTTPBearer()
 
 config = get_config()
 
-CONVERSATION_ID = 'conv_2'
+CONVERSATION_ID = 'conv_1'
 
 # =========== GLOBAL VARIABLES ===========
 llm_model, embed_model = get_model(model_name=ModelName.AZURE_OPENAI, config=config,
                                    llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
 top_n = 5
 
-index_ojk = RedisIndexManager(index_name='ojk', embed_model=embed_model, config=config, db_id=0)
-index_bi = RedisIndexManager(index_name='bi', embed_model=embed_model, config=config, db_id=0)
-index_sikepo_ket = RedisIndexManager(index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config, db_id=0)
-index_sikepo_rek = RedisIndexManager(index_name='sikepo-rekam-jejak', embed_model=embed_model, config=config, db_id=0)
+# index_ojk = RedisIndexManager(index_name='ojk', embed_model=embed_model, config=config, db_id=0)
+# index_bi = RedisIndexManager(index_name='bi', embed_model=embed_model, config=config, db_id=0)
+# index_sikepo_ket = RedisIndexManager(index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config, db_id=0)
+# index_sikepo_rek = RedisIndexManager(index_name='sikepo-rekam-jejak', embed_model=embed_model, config=config, db_id=0)
+index_ojk = ElasticIndexManager(index_name='ojk', embed_model=embed_model, config=config)
+index_bi = ElasticIndexManager(index_name='bi', embed_model=embed_model, config=config)
+index_sikepo_ket = ElasticIndexManager(index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config)
+index_sikepo_rek = ElasticIndexManager(index_name='sikepo-rekam-jejak', embed_model=embed_model, config=config)
 
 vector_store_ojk = index_ojk.load_vector_index()
 vector_store_bi = index_bi.load_vector_index()
