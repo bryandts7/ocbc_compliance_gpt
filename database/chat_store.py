@@ -155,6 +155,27 @@ class ElasticChatStore:
             all_history[(user_id, conversation_id)] = history.messages
 
         return all_history
+    
+    def get_conversation_ids_by_user_id(self, user_id: str) -> List[str]:
+        query = {
+            "query": {
+                "prefix": {
+                    "session_id": f"{user_id}:"
+                }
+            },
+            "sort": [
+                {"created_at": {"order": "desc"}}
+            ]
+        }
+        results = self.es_client.search(
+            index=self.index_name, body=query, size=10000)
+        conversation_ids = []
+        for hit in results['hits']['hits']:
+            session_id = hit['_source']['session_id']
+            _, conversation_id = session_id.split(':', 1)
+            conversation_ids.append(conversation_id)
+        conversation_ids = list(dict.fromkeys(conversation_ids))
+        return conversation_ids
 
 
 # ========== POSTGRE ==========
