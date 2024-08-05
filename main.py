@@ -180,6 +180,18 @@ async def chat_input(request: ChatRequest, credentials: HTTPAuthorizationCredent
             "ai_response": ai_response
         }
     )
+
+@app.get("/fetch_conversations/")
+async def fetch_conv(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Get the user ID from the Authorization header
+
+    user_id = credentials.credentials
+    session_ids = chat_store.get_conversation_ids_by_user_id(user_id)
+    return JSONResponse(
+        status_code=200,
+        content=[{"title": session_id, "id": session_id} for session_id in session_ids]
+    )
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=9898)
