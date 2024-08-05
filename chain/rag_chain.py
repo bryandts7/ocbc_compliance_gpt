@@ -272,7 +272,8 @@ def get_response(question: str, chain, user_id: str, conversation_id: str):
     return response
 
 
-def print_answer_stream(question: str, chain, user_id: str, conversation_id: str):
-    for chunk in chain.stream({"question": question}, config={"configurable": {"user_id": user_id, "conversation_id": conversation_id}}):
+async def print_answer_stream(question: str, chain, user_id: str, conversation_id: str):
+    async for chunk in chain.astream({"question": question}, config={"configurable": {"user_id": user_id, "conversation_id": conversation_id}}):
         if 'answer' in chunk:
-            print(chunk['answer'], end='', flush=True)
+            yield f"data: {chunk['answer']}\n\n"
+            # print(chunk['answer'], end='', flush=True)
