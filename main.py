@@ -162,6 +162,7 @@ async def initialize_model(request: ModelRequest):
         }
     )
 
+
 @app.get("/chat/{message}")
 async def chat_endpoint(message: str):
     return StreamingResponse(print_answer_stream(message, chain=chain_history, user_id="user_id", conversation_id=CONVERSATION_ID), media_type="text/event-stream")

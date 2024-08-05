@@ -62,13 +62,14 @@ class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
 
         # Retrieve only the last k pairs of messages in the original order
         all_messages = messages_from_dict(items)
-        human_messages = [msg for msg in all_messages if isinstance(msg, HumanMessage)]
+        human_messages = [
+            msg for msg in all_messages if isinstance(msg, HumanMessage)]
 
         # Take the last k Human messages
         last_k_human_messages = human_messages[:self.k]
         last_k_human_messages.reverse()
         return last_k_human_messages
-    
+
 
 class ElasticChatStore:
     """A store for managing chat histories using Elasticsearch."""
@@ -97,15 +98,36 @@ class ElasticChatStore:
         )
         return history
 
+    def get_coversation_ids_by_user_id(self, user_id: str) -> List[str]:
+        query = {
+            "query": {
+                "prefix": {
+                    "session_id": f"{user_id}:"
+                }
+            },
+            "sort": [
+                {"created_at": {"order": "desc"}}
+            ]
+        }
+        results = self.es_client.search(
+            index=self.index_name, body=query, size=10000)
+        conversation_ids = []
+        for hit in results['hits']['hits']:
+            session_id = hit['_source']['session_id']
+            _, conversation_id = session_id.split(':', 1)
+            conversation_ids.append(conversation_id)
+        conversation_ids = list(dict.fromkeys(conversation_ids))
+        return conversation_ids
+
     def clear_session_history(self, user_id: str, conversation_id: str) -> None:
         """Clear the session history for a given user and conversation."""
         session_id = f"{user_id}:{conversation_id}"
-        query = {"query": {"term": {"session_id.keyword": session_id}}}
+        query = {"query": {"prefix": {"session_id": session_id}}}
         self.es_client.delete_by_query(index=self.index_name, body=query)
 
     def clear_session_history_by_userid(self, user_id: str) -> None:
         """Clear the session history for a given user."""
-        query = {"query": {"prefix": {"session_id.keyword": f"{user_id}:"}}}
+        query = {"query": {"prefix": {"session_id": f"{user_id}:"}}}
         self.es_client.delete_by_query(index=self.index_name, body=query)
 
     def add_message_to_history(self, user_id: str, conversation_id: str, message: BaseMessage) -> None:
