@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+import asyncio
 from pydantic import BaseModel
 from utils.config import get_config
 from utils.models import ModelName, LLMModelName, EmbeddingModelName, get_model
@@ -11,9 +12,10 @@ from retriever.retriever_ojk.retriever_ojk import get_retriever_ojk
 from retriever.retriever_bi.retriever_bi import get_retriever_bi
 from retriever.retriever_sikepo.lotr_sikepo import lotr_sikepo
 from database.chat_store import ElasticChatStore, RedisChatStore
-from chain.rag_chain import create_combined_answer_chain, create_chain_with_chat_history
-from chain.chain_sikepo.graph_cypher_sikepo_chain import graph_rag_chain 
+from chain.rag_chain import create_combined_answer_chain, create_chain_with_chat_history, print_answer_stream
+from chain.chain_sikepo.graph_cypher_sikepo_chain import graph_rag_chain
 from chain.rag_chain import get_response
+from typing import AsyncGenerator
 
 import nest_asyncio
 import warnings
@@ -37,10 +39,14 @@ top_n = 5
 # index_bi = RedisIndexManager(index_name='bi', embed_model=embed_model, config=config, db_id=0)
 # index_sikepo_ket = RedisIndexManager(index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config, db_id=0)
 # index_sikepo_rek = RedisIndexManager(index_name='sikepo-rekam-jejak', embed_model=embed_model, config=config, db_id=0)
-index_ojk = ElasticIndexManager(index_name='ojk', embed_model=embed_model, config=config)
-index_bi = ElasticIndexManager(index_name='bi', embed_model=embed_model, config=config)
-index_sikepo_ket = ElasticIndexManager(index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config)
-index_sikepo_rek = ElasticIndexManager(index_name='sikepo-rekam-jejak', embed_model=embed_model, config=config)
+index_ojk = ElasticIndexManager(
+    index_name='ojk', embed_model=embed_model, config=config)
+index_bi = ElasticIndexManager(
+    index_name='bi', embed_model=embed_model, config=config)
+index_sikepo_ket = ElasticIndexManager(
+    index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config)
+index_sikepo_rek = ElasticIndexManager(
+    index_name='sikepo-rekam-jejak', embed_model=embed_model, config=config)
 
 vector_store_ojk = index_ojk.load_vector_index()
 vector_store_bi = index_bi.load_vector_index()
@@ -89,15 +95,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class ChatRequest(BaseModel):
     user_input: str
+
 
 class ChatResponse(BaseModel):
     user_message: str
     ai_response: str
 
+
 class ModelRequest(BaseModel):
     model: str
+
 
 @app.post("/initialize_model/")
 async def initialize_model(request: ModelRequest):
@@ -152,34 +162,36 @@ async def initialize_model(request: ModelRequest):
         }
     )
 
-@app.post("/chat/", response_model=ChatResponse)
-async def chat_input(request: ChatRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    if not request.user_input:
-        raise HTTPException(
-            status_code=400, detail="Please enter a valid input")
+@app.get("/chat/{message}")
+async def chat_endpoint(message: str):
+    return StreamingResponse(print_answer_stream(message, chain=chain_history, user_id="user_id", conversation_id=CONVERSATION_ID), media_type="text/event-stream")
 
-    user_message = request.user_input
-    ai_response = ""
+# @app.post("/chat/", response_model=ChatResponse)
+# async def chat_input(request: ChatRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
+#     if not request.user_input:
+#         raise HTTPException(
+#             status_code=400, detail="Please enter a valid input")
 
-    # Get the user ID from the Authorization header
-    user_id = credentials.credentials
+#     user_message = request.user_input
+#     ai_response = ""
 
-    response = get_response(
-        chain=chain_history,
-        question=user_message,
-        user_id=user_id,
-        conversation_id=CONVERSATION_ID,
-    )
+#     # Get the user ID from the Authorization header
+#     user_id = credentials.credentials
 
-    ai_response = response['answer'].replace("\n", "<br>")
+#     response = get_response(
+#         chain=chain_history,
+#         question=user_message,
+#         user_id=user_id,
+#         conversation_id=CONVERSATION_ID,
+#     )
 
-    return JSONResponse(
-        status_code=200,
-        content={
-            "user_message": user_message,
-            "ai_response": ai_response
-        }
-    )
+    # return JSONResponse(
+    #     status_code=200,
+    #     content={
+    #         "user_message": user_message,
+    #         "ai_response": ai_response
+    #     }
+    # )
 
 @app.get("/fetch_conversations/")
 async def fetch_conv(credentials: HTTPAuthorizationCredentials = Depends(security)):
