@@ -164,35 +164,11 @@ async def initialize_model(request: ModelRequest):
 
 
 @app.get("/chat/{message}")
-async def chat_endpoint(message: str):
-    return StreamingResponse(print_answer_stream(message, chain=chain_history, user_id="user_id", conversation_id=CONVERSATION_ID), media_type="text/event-stream")
+async def chat_endpoint(message: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Get the user ID from the Authorization header
+    user_id = credentials.credentials
+    return StreamingResponse(print_answer_stream(message, chain=chain_history, user_id=user_id, conversation_id=CONVERSATION_ID), media_type="text/event-stream")
 
-# @app.post("/chat/", response_model=ChatResponse)
-# async def chat_input(request: ChatRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
-#     if not request.user_input:
-#         raise HTTPException(
-#             status_code=400, detail="Please enter a valid input")
-
-#     user_message = request.user_input
-#     ai_response = ""
-
-#     # Get the user ID from the Authorization header
-#     user_id = credentials.credentials
-
-#     response = get_response(
-#         chain=chain_history,
-#         question=user_message,
-#         user_id=user_id,
-#         conversation_id=CONVERSATION_ID,
-#     )
-
-    # return JSONResponse(
-    #     status_code=200,
-    #     content={
-    #         "user_message": user_message,
-    #         "ai_response": ai_response
-    #     }
-    # )
 
 @app.get("/fetch_conversations/")
 async def fetch_conv(credentials: HTTPAuthorizationCredentials = Depends(security)):
