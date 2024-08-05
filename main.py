@@ -16,6 +16,8 @@ from chain.rag_chain import create_combined_answer_chain, create_chain_with_chat
 from chain.chain_sikepo.graph_cypher_sikepo_chain import graph_rag_chain
 from chain.rag_chain import get_response
 from typing import AsyncGenerator
+import time
+from typing import Union
 
 import nest_asyncio
 import warnings
@@ -27,8 +29,6 @@ warnings.filterwarnings("ignore")
 security = HTTPBearer()
 
 config = get_config()
-
-CONVERSATION_ID = 'conv_1'
 
 # =========== GLOBAL VARIABLES ===========
 llm_model, embed_model = get_model(model_name=ModelName.AZURE_OPENAI, config=config,
@@ -164,10 +164,10 @@ async def initialize_model(request: ModelRequest):
 
 
 @app.get("/chat/{message}")
-async def chat_endpoint(message: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def chat_endpoint(message: str, conv_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Get the user ID from the Authorization header
     user_id = credentials.credentials
-    return StreamingResponse(print_answer_stream(message, chain=chain_history, user_id=user_id, conversation_id=CONVERSATION_ID), media_type="text/event-stream")
+    return StreamingResponse(print_answer_stream(message, chain=chain_history, user_id=user_id, conversation_id=conv_id), media_type="text/event-stream")
 
 
 @app.get("/fetch_conversations/")
@@ -180,6 +180,17 @@ async def fetch_conv(credentials: HTTPAuthorizationCredentials = Depends(securit
         status_code=200,
         content=[{"title": session_id, "id": session_id} for session_id in session_ids]
     )
+
+@app.get("/fetch_messages/{conversation_id}")
+async def fetch_message(conversation_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Get the user ID from the Authorization header
+    user_id = credentials.credentials
+    messages = chat_store.get_conversation(user_id=user_id, conversation_id=conversation_id)
+    return JSONResponse(
+        status_code=200,
+        content=messages
+    )
+
 
 if __name__ == "__main__":
     import uvicorn
