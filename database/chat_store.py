@@ -167,7 +167,12 @@ class ElasticChatStore:
         """Clear the session history for a given user and conversation."""
         session_id = f"{user_id}:{conversation_id}"
         query = {"query": {"prefix": {"session_id": session_id}}}
-        self.es_client.delete_by_query(index=self.index_name, body=query)
+        try:
+            response = self.es_client.delete_by_query(index=self.index_name, body=query)
+            return response.get('deleted', 0) > 0
+        except Exception as e:
+            return False
+
 
     def clear_session_history_by_userid(self, user_id: str) -> None:
         """Clear the session history for a given user."""
@@ -220,6 +225,34 @@ class ElasticChatStore:
             conversation_ids.append(conversation_id)
         conversation_ids = list(dict.fromkeys(conversation_ids))
         return conversation_ids
+    
+    def rename_conversation(self, user_id: str, old_conversation_id: str, new_conversation_id: str) -> bool:
+        old_session_id = f"{user_id}:{old_conversation_id}"
+        new_session_id = f"{user_id}:{new_conversation_id}"
+    
+        query = {
+            "query": {
+                "term": {
+                    "session_id": old_session_id
+                }
+            }
+        }
+        
+        results = self.es_client.search(index=self.index_name, body=query, size=10000)
+
+        if results['hits']['total']['value'] == 0:
+            return False
+
+        for hit in results['hits']['hits']:
+            doc_id = hit['_id']
+            update_body = {
+                "doc": {
+                    "session_id": new_session_id
+                }
+            }
+            self.es_client.update(index=self.index_name, id=doc_id, body=update_body)
+        
+        return True
 
 
 # ========== POSTGRE ==========
