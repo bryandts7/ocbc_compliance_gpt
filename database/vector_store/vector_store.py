@@ -14,6 +14,8 @@ import redis
 
 from elasticsearch import Elasticsearch, NotFoundError as ESNotFoundError
 from langchain_community.vectorstores import ElasticsearchStore
+from langchain_elasticsearch import DenseVectorStrategy
+
 
 import os
 
@@ -80,7 +82,8 @@ class ElasticIndexManager(VectorIndexManager):
                 documents=docs[0:batch_size],
                 embedding=self.embed_model,
                 es_connection=self.es_client,
-                index_name=self.index_name
+                index_name=self.index_name,
+                strategy=DenseVectorStrategy(hybrid=True)
             )
             time.sleep(4)
 
@@ -93,7 +96,8 @@ class ElasticIndexManager(VectorIndexManager):
             self.vector_store = ElasticsearchStore(
                 embedding=self.embed_model,
                 es_connection=self.es_client,
-                index_name=self.index_name
+                index_name=self.index_name,
+                strategy=DenseVectorStrategy(hybrid=True)
             )
 
         for i in range(start_split_idx, len(docs), batch_size):

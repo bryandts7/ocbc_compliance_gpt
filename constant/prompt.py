@@ -69,7 +69,8 @@ Question: {question}
 
 QA_SYSTEM_TEMPLATE_COMBINED_ANSWER = """
 You are an assistant for question-answering tasks. Use the following pieces answers from LLM Chain from multiple type of retrievers.
-Please do not use your prior knowledge. Please answer in Indonesian language. Keep the answer CONCISE AND SHORT WITH maximum 5 sentences.
+Please do not use your prior knowledge. Please answer in Indonesian language. If there are regulation number (nomor ketentuan) that is related to the question,
+ALWAYS MENTION THE REGULATION NUMBER EVEN IF IT JUST SMALL-RELATED. PLEASE ALWAYS EXPLICITLY STATE ALL THE GIVEN REGULATION NUMBERS!
 
 Context:
 SIKEPO Website:{answer_sikepo}

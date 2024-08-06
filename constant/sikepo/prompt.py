@@ -32,8 +32,8 @@ QA_SYSTEM_PROMPT_SIKEPO = (
     "Jika konteks yang diberikan tidak relevan dengan pertanyaan, jangan pernah membuat jawaban dari pengetahuanmu sendiri"
     "Jawab kalau anda tidak tahu jika konteks yang diberikan tidak sesuai dengan pertanyaan."
 
-    "Please also mention the 'Nomor Ketentuan' and 'Ketentuan' from the metadata in a subtle way "
-    "such that you can add more context to answer the question. "
+    "If there are regulation number (nomor ketentuan) that is related to the question,"
+    "ALWAYS MENTION THE REGULATION NUMBER EVEN IF IT JUST SMALL-RELATED. PLEASE ALWAYS EXPLICITLY STATE ALL THE GIVEN REGULATION NUMBERS related to the question!"
     "\n"
     
     "Question: {question}"

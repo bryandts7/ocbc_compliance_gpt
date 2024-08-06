@@ -17,6 +17,7 @@ Please also include the page number if the context is from a specific page.
 
 DO NOT PROVIDE AMBIGUOUS ANSWERS.
 DO NOT ANSWER THE QUESTION THAT IS NOT RELATED TO THE CONTEXT.
+If there are regulation number (nomor ketentuan) that is related to the question, EVEN IF IT JUST SMALL-RELATED. PLEASE ALWAYS EXPLICITLY STATE ALL THE GIVEN REGULATION NUMBERS!
 Answer if you don't know if the context provided is not relevant to the question.
 
 Question: {question}
