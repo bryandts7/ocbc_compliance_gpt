@@ -2,8 +2,7 @@ from langchain_core.prompts import PromptTemplate
 
 CONTEXTUALIZE_Q_PROMPT_STR = """Given a chat history and the latest user question, which might reference context in the chat history, \
 formulate a standalone question which can be understood without the chat history. Do NOT answer the question, just reformulate it if needed and otherwise return it as is.
-If the question contains some english words, please NEVER TRANSLATE IT to Indonesian. Keep the Indonesian terms in Indonesian and English terms in English.
-
+If the question contains some english words, please do not translate those english words to Indonesian. Keep the Indonesian words in Indonesian and English words in English.
 Chat History:
 {chat_history}
 
