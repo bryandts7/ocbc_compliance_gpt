@@ -18,6 +18,7 @@ from chain.rag_chain import get_response
 from typing import AsyncGenerator
 import time
 from typing import Union
+from fastapi import Query
 
 import nest_asyncio
 import warnings
@@ -190,6 +191,28 @@ async def fetch_message(conversation_id: str, credentials: HTTPAuthorizationCred
         status_code=200,
         content=messages
     )
+
+@app.put("/rename_conversation/{conversation_id}")
+async def rename_conversation(
+    conversation_id: str, 
+    new_conversation_id: str = Query(..., description="New title for the conversation"),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    user_id = credentials.credentials
+    success = chat_store.rename_conversation(user_id, conversation_id, new_conversation_id)
+    if success:
+        return JSONResponse(status_code=200, content={"message": "Conversation renamed successfully"})
+    else:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+@app.delete("/delete_conversation/{conversation_id}")
+async def delete_conversation(conversation_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    user_id = credentials.credentials
+    success = chat_store.clear_session_history(user_id, conversation_id)
+    if success:
+        return JSONResponse(status_code=200, content={"message": "Conversation deleted successfully"})
+    else:
+        raise HTTPException(status_code=404, detail="Conversation not found")
 
 
 if __name__ == "__main__":
