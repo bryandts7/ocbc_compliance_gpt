@@ -176,10 +176,10 @@ async def fetch_conv(credentials: HTTPAuthorizationCredentials = Depends(securit
     # Get the user ID from the Authorization header
 
     user_id = credentials.credentials
-    session_ids = chat_store.get_conversation_ids_by_user_id(user_id)
+    session_ids_with_title = chat_store.get_conversation_ids_by_user_id(user_id)
     return JSONResponse(
         status_code=200,
-        content=[{"title": session_id, "id": session_id} for session_id in session_ids]
+        content=session_ids_with_title
     )
 
 @app.get("/fetch_messages/{conversation_id}")

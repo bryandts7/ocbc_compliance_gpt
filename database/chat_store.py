@@ -96,7 +96,7 @@ class ElasticChatStore:
         )
         return history
 
-    def get_coversation_ids_by_user_id(self, user_id: str) -> List[str]:
+    def get_conversation_ids_by_user_id(self, user_id: str) -> List[dict]:
         query = {
             "query": {
                 "prefix": {
@@ -108,35 +108,31 @@ class ElasticChatStore:
             ]
         }
         results = self.es_client.search(
-            index=self.index_name, body=query, size=10000)
-        conversation_ids = []
+            index=self.index_name, body=query, size=10000
+        )
+        conversation_ids = {}
         for hit in results['hits']['hits']:
             session_id = hit['_source']['session_id']
             _, conversation_id = session_id.split(':', 1)
-            conversation_ids.append(conversation_id)
-        conversation_ids = list(dict.fromkeys(conversation_ids))
-        return conversation_ids
+            
+            if conversation_id not in conversation_ids:
+                conversation_ids[conversation_id] = hit['_source']['history']
+            else:
+                # Update to the most recent message
+                conversation_ids[conversation_id] = hit['_source']['history']
 
-    def get_coversation_ids_by_user_id(self, user_id: str) -> List[str]:
-        query = {
-            "query": {
-                "prefix": {
-                    "session_id": f"{user_id}:"
-                }
-            },
-            "sort": [
-                {"created_at": {"order": "desc"}}
-            ]
-        }
-        results = self.es_client.search(
-            index=self.index_name, body=query, size=10000)
-        conversation_ids = []
-        for hit in results['hits']['hits']:
-            session_id = hit['_source']['session_id']
-            _, conversation_id = session_id.split(':', 1)
-            conversation_ids.append(conversation_id)
-        conversation_ids = list(dict.fromkeys(conversation_ids))
-        return conversation_ids
+        # Format result
+        formatted_result = []
+        for conv_id, last_message_str in conversation_ids.items():
+            last_message = json.loads(last_message_str)
+            content = last_message["data"]["content"]
+            title = (content[:25] + '...') if len(content) > 25 else content
+            formatted_result.append({
+                "id": conv_id,
+                "title": title
+            })
+
+        return formatted_result
 
     def get_conversation(self, user_id: str, conversation_id: str) -> List[dict]:
         session_id = f"{user_id}:{conversation_id}"
@@ -205,27 +201,6 @@ class ElasticChatStore:
 
         return all_history
 
-    def get_conversation_ids_by_user_id(self, user_id: str) -> List[str]:
-        query = {
-            "query": {
-                "prefix": {
-                    "session_id": f"{user_id}:"
-                }
-            },
-            "sort": [
-                {"created_at": {"order": "desc"}}
-            ]
-        }
-        results = self.es_client.search(
-            index=self.index_name, body=query, size=10000)
-        conversation_ids = []
-        for hit in results['hits']['hits']:
-            session_id = hit['_source']['session_id']
-            _, conversation_id = session_id.split(':', 1)
-            conversation_ids.append(conversation_id)
-        conversation_ids = list(dict.fromkeys(conversation_ids))
-        return conversation_ids
-    
     def rename_conversation(self, user_id: str, old_conversation_id: str, new_conversation_id: str) -> bool:
         old_session_id = f"{user_id}:{old_conversation_id}"
         new_session_id = f"{user_id}:{new_conversation_id}"
