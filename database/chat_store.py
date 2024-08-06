@@ -62,13 +62,11 @@ class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
 
         # Retrieve only the last k pairs of messages in the original order
         all_messages = messages_from_dict(items)
-        human_messages = [
-            msg for msg in all_messages if isinstance(msg, HumanMessage)]
-
+        
         # Take the last k Human messages
-        last_k_human_messages = human_messages[:self.k]
-        last_k_human_messages.reverse()
-        return last_k_human_messages
+        last_k_human_ai_messages = all_messages[:self.k]
+        last_k_human_ai_messages.reverse()
+        return last_k_human_ai_messages
 
 
 class ElasticChatStore:

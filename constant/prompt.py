@@ -1,14 +1,13 @@
 from langchain_core.prompts import PromptTemplate
 
-CONTEXTUALIZE_Q_PROMPT_STR = """Given the following prior request from the users and a new question, \
-rephrase the new question to be a standalone question. 
-If the new question is not clear, indicate so. 
-If the chat history is not relevant to the follow-up question, PLEASE IGNORE the chat history AND DON'T PARAPHRASE THE QUESTION.
+CONTEXTUALIZE_Q_PROMPT_STR = """Given a chat history and the latest user question, which might reference context in the chat history, \
+formulate a standalone question which can be understood without the chat history. Do NOT answer the question, just reformulate it if needed and otherwise return it as is.
 If the question contains some english words, please NEVER TRANSLATE IT to Indonesian. Keep the Indonesian terms in Indonesian and English terms in English.
-Chat History Request from the user:
+
+Chat History:
 {chat_history}
 
-New Question: {question}
+Latest Question: {question}
 Standalone Question: """
 
 
@@ -71,7 +70,7 @@ Question: {question}
 
 QA_SYSTEM_TEMPLATE_COMBINED_ANSWER = """
 You are an assistant for question-answering tasks. Use the following pieces answers from LLM Chain from multiple type of retrievers.
-Please do not use your prior knowledge.
+Please do not use your prior knowledge. Please answer in Indonesian language. Keep the answer CONCISE AND SHORT WITH maximum 5 sentences.
 
 Context:
 SIKEPO Website:{answer_sikepo}

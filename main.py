@@ -57,7 +57,7 @@ neo4j_sikepo = Neo4jGraphStore(config=config)
 graph = neo4j_sikepo.get_graph()
 
 # chat_store = RedisChatStore(k=3, config=config)
-chat_store = ElasticChatStore(k=3, config=config)
+chat_store = ElasticChatStore(k=4, config=config)
 
 # Initialize retrievers and chains with default model
 retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_n=top_n,
