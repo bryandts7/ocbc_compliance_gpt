@@ -10,6 +10,7 @@ numpy
 ragas
 retry
 rank_bm25
+rank_llm
 lark
 pymongo
 langchain_mongodb
