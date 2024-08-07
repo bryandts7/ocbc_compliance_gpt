@@ -25,7 +25,8 @@ QA_SYSTEM_PROMPT_SIKEPO = (
     "Use the following pieces of retrieved context to answer "
     "the question. If you don't know the answer, say that you "
     "don't know. Please do not use your prior knowledge."
-    "If the question does not related to the context given, just answer 'Saya tidak tahu mengenai hal tersebut'. "
+    "If the question does not related to the context given, just answer 'Saya tidak tahu mengenai hal tersebut', but please "
+    "always try to answer it first, even if the context is only small-related"
     "Please write your answer ONLY in INDONESIAN."
 
     "Jika pertanyaan menanyakan tentang peraturan, tulis dengan detail nomor ketentuan dan ketentuannya secara detail"

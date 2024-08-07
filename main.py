@@ -63,10 +63,14 @@ chat_store = ElasticChatStore(k=4, config=config)
 # Initialize retrievers and chains with default model
 retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_n=top_n,
                                   llm_model=llm_model, embed_model=embed_model, config=config)
+retriever_ojk_wo_self = get_retriever_ojk(vector_store=vector_store_ojk, top_n=top_n,
+                                  llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
 retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_n=top_n,
                                 llm_model=llm_model, embed_model=embed_model, config=config)
 retriever_sikepo_ket = lotr_sikepo(vector_store=vector_store_ket, top_n=top_n,
                                    llm_model=llm_model, embed_model=embed_model, config=config)
+retriever_sikepo_ket_wo_self = lotr_sikepo(vector_store=vector_store_ket, top_n=top_n,
+                                   llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
 retriever_sikepo_rek = lotr_sikepo(vector_store=vector_store_rek, top_n=top_n,
                                    llm_model=llm_model, embed_model=embed_model, config=config)
 
@@ -79,9 +83,22 @@ chain = create_combined_answer_chain(
     retriever_sikepo_ketentuan=retriever_sikepo_ket,
     retriever_sikepo_rekam=retriever_sikepo_rek,
 )
+chain_wo_self = create_combined_answer_chain(
+    llm_model=llm_model,
+    graph_chain=graph_chain,
+    retriever_ojk=retriever_ojk_wo_self,
+    retriever_bi=retriever_bi,
+    retriever_sikepo_ketentuan=retriever_sikepo_ket_wo_self,
+    retriever_sikepo_rekam=retriever_sikepo_rek,
+)
 
 chain_history = create_chain_with_chat_history(
     final_chain=chain,
+    chat_store=chat_store,
+)
+
+chain_history_wo_self = create_chain_with_chat_history(
+    final_chain=chain_wo_self,
     chat_store=chat_store,
 )
 
@@ -112,7 +129,7 @@ class ModelRequest(BaseModel):
 
 @app.post("/initialize_model/")
 async def initialize_model(request: ModelRequest):
-    global llm_model, embed_model, retriever_ojk, retriever_bi, retriever_sikepo_ket, retriever_sikepo_rek, chain, chain_history, top_n
+    global llm_model, embed_model, retriever_ojk, retriever_ojk_wo_self, retriever_bi, retriever_sikepo_ket, retriever_sikepo_ket_wo_self, retriever_sikepo_rek, chain, chain_wo_self, chain_history, chain_history_wo_self, top_n
 
     model = request.model
     print(f"Received model: {model}")
@@ -120,7 +137,7 @@ async def initialize_model(request: ModelRequest):
     if model == 'GPT_4O_MINI':
         llm_model, embed_model = get_model(model_name=ModelName.OPENAI, config=config,
                                            llm_model_name=LLMModelName.GPT_4O_MINI, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
-        top_n = 10
+        top_n = 15
     elif model == 'GPT_35_TURBO':
         llm_model, embed_model = get_model(model_name=ModelName.AZURE_OPENAI, config=config,
                                            llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
@@ -130,13 +147,17 @@ async def initialize_model(request: ModelRequest):
 
     # Reinitialize retrievers with the new model and top_n
     retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_n=top_n,
-                                      llm_model=llm_model, embed_model=embed_model, config=config)
+                                  llm_model=llm_model, embed_model=embed_model, config=config)
+    retriever_ojk_wo_self = get_retriever_ojk(vector_store=vector_store_ojk, top_n=top_n,
+                                    llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
     retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_n=top_n,
                                     llm_model=llm_model, embed_model=embed_model, config=config)
     retriever_sikepo_ket = lotr_sikepo(vector_store=vector_store_ket, top_n=top_n,
-                                       llm_model=llm_model, embed_model=embed_model, config=config)
+                                    llm_model=llm_model, embed_model=embed_model, config=config)
+    retriever_sikepo_ket_wo_self = lotr_sikepo(vector_store=vector_store_ket, top_n=top_n,
+                                    llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
     retriever_sikepo_rek = lotr_sikepo(vector_store=vector_store_rek, top_n=top_n,
-                                       llm_model=llm_model, embed_model=embed_model, config=config)
+                                    llm_model=llm_model, embed_model=embed_model, config=config)
 
     # Reinitialize the chain with the new retrievers
     graph_chain = graph_rag_chain(llm_model, llm_model, graph=graph)
@@ -148,9 +169,22 @@ async def initialize_model(request: ModelRequest):
         retriever_sikepo_ketentuan=retriever_sikepo_ket,
         retriever_sikepo_rekam=retriever_sikepo_rek,
     )
+    chain_wo_self = create_combined_answer_chain(
+        llm_model=llm_model,
+        graph_chain=graph_chain,
+        retriever_ojk=retriever_ojk_wo_self,
+        retriever_bi=retriever_bi,
+        retriever_sikepo_ketentuan=retriever_sikepo_ket_wo_self,
+        retriever_sikepo_rekam=retriever_sikepo_rek,
+    )
 
     chain_history = create_chain_with_chat_history(
         final_chain=chain,
+        chat_store=chat_store,
+    )
+
+    chain_history_wo_self = create_chain_with_chat_history(
+        final_chain=chain_wo_self,
         chat_store=chat_store,
     )
 
@@ -168,8 +202,12 @@ async def initialize_model(request: ModelRequest):
 async def chat_endpoint(message: str, conv_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Get the user ID from the Authorization header
     user_id = credentials.credentials
-    return StreamingResponse(print_answer_stream(message, chain=chain_history, user_id=user_id, conversation_id=conv_id), media_type="text/event-stream")
-
+    try:
+        response =  StreamingResponse(await print_answer_stream(message, chain=chain_history, user_id=user_id, conversation_id=conv_id), media_type="text/event-stream")
+        return response
+    except:
+        response =  StreamingResponse(print_answer_stream(message, chain=chain_history_wo_self, user_id=user_id, conversation_id=conv_id), media_type="text/event-stream") 
+        return response
 
 @app.get("/fetch_conversations/")
 async def fetch_conv(credentials: HTTPAuthorizationCredentials = Depends(security)):
