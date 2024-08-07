@@ -11,7 +11,7 @@ from database.vector_store.neo4j_graph_store import Neo4jGraphStore
 from retriever.retriever_ojk.retriever_ojk import get_retriever_ojk
 from retriever.retriever_bi.retriever_bi import get_retriever_bi
 from retriever.retriever_sikepo.lotr_sikepo import lotr_sikepo
-from database.chat_store import ElasticChatStore, RedisChatStore
+from database.chat_store import ElasticChatStore
 from chain.rag_chain import create_combined_answer_chain, create_chain_with_chat_history, print_answer_stream
 from chain.chain_sikepo.graph_cypher_sikepo_chain import graph_rag_chain
 from chain.rag_chain import get_response
@@ -34,7 +34,7 @@ config = get_config()
 # =========== GLOBAL VARIABLES ===========
 llm_model, embed_model = get_model(model_name=ModelName.AZURE_OPENAI, config=config,
                                    llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
-top_n = 5
+top_k = 8
 
 # index_ojk = RedisIndexManager(index_name='ojk', embed_model=embed_model, config=config, db_id=0)
 # index_bi = RedisIndexManager(index_name='bi', embed_model=embed_model, config=config, db_id=0)
@@ -61,13 +61,17 @@ graph = neo4j_sikepo.get_graph()
 chat_store = ElasticChatStore(k=4, config=config)
 
 # Initialize retrievers and chains with default model
-retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_n=top_n,
+retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_k=top_k,
                                   llm_model=llm_model, embed_model=embed_model, config=config)
-retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_n=top_n,
+retriever_ojk_wo_self = get_retriever_ojk(vector_store=vector_store_ojk, top_k=top_k,
+                                  llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
+retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_k=top_k,
                                 llm_model=llm_model, embed_model=embed_model, config=config)
-retriever_sikepo_ket = lotr_sikepo(vector_store=vector_store_ket, top_n=top_n,
+retriever_sikepo_ket = lotr_sikepo(vector_store=vector_store_ket, top_k=top_k,
                                    llm_model=llm_model, embed_model=embed_model, config=config)
-retriever_sikepo_rek = lotr_sikepo(vector_store=vector_store_rek, top_n=top_n,
+retriever_sikepo_ket_wo_self = lotr_sikepo(vector_store=vector_store_ket, top_k=top_k,
+                                   llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
+retriever_sikepo_rek = lotr_sikepo(vector_store=vector_store_rek, top_k=top_k,
                                    llm_model=llm_model, embed_model=embed_model, config=config)
 
 graph_chain = graph_rag_chain(llm_model, llm_model, graph=graph)
@@ -79,9 +83,22 @@ chain = create_combined_answer_chain(
     retriever_sikepo_ketentuan=retriever_sikepo_ket,
     retriever_sikepo_rekam=retriever_sikepo_rek,
 )
+chain_wo_self = create_combined_answer_chain(
+    llm_model=llm_model,
+    graph_chain=graph_chain,
+    retriever_ojk=retriever_ojk_wo_self,
+    retriever_bi=retriever_bi,
+    retriever_sikepo_ketentuan=retriever_sikepo_ket_wo_self,
+    retriever_sikepo_rekam=retriever_sikepo_rek,
+)
 
 chain_history = create_chain_with_chat_history(
     final_chain=chain,
+    chat_store=chat_store,
+)
+
+chain_history_wo_self = create_chain_with_chat_history(
+    final_chain=chain_wo_self,
     chat_store=chat_store,
 )
 
@@ -112,7 +129,7 @@ class ModelRequest(BaseModel):
 
 @app.post("/initialize_model/")
 async def initialize_model(request: ModelRequest):
-    global llm_model, embed_model, retriever_ojk, retriever_bi, retriever_sikepo_ket, retriever_sikepo_rek, chain, chain_history, top_n
+    global llm_model, embed_model, retriever_ojk, retriever_ojk_wo_self, retriever_bi, retriever_sikepo_ket, retriever_sikepo_ket_wo_self, retriever_sikepo_rek, chain, chain_wo_self, chain_history, chain_history_wo_self, top_k
 
     model = request.model
     print(f"Received model: {model}")
@@ -120,23 +137,27 @@ async def initialize_model(request: ModelRequest):
     if model == 'GPT_4O_MINI':
         llm_model, embed_model = get_model(model_name=ModelName.OPENAI, config=config,
                                            llm_model_name=LLMModelName.GPT_4O_MINI, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
-        top_n = 10
+        top_k = 12
     elif model == 'GPT_35_TURBO':
         llm_model, embed_model = get_model(model_name=ModelName.AZURE_OPENAI, config=config,
                                            llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
-        top_n = 5
+        top_k = 8
     else:
         raise HTTPException(status_code=400, detail="Invalid model specified")
 
-    # Reinitialize retrievers with the new model and top_n
-    retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_n=top_n,
-                                      llm_model=llm_model, embed_model=embed_model, config=config)
-    retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_n=top_n,
+    # Reinitialize retrievers with the new model and top_k
+    retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_k=top_k,
+                                  llm_model=llm_model, embed_model=embed_model, config=config)
+    retriever_ojk_wo_self = get_retriever_ojk(vector_store=vector_store_ojk, top_k=top_k,
+                                    llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
+    retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_k=top_k,
                                     llm_model=llm_model, embed_model=embed_model, config=config)
-    retriever_sikepo_ket = lotr_sikepo(vector_store=vector_store_ket, top_n=top_n,
-                                       llm_model=llm_model, embed_model=embed_model, config=config)
-    retriever_sikepo_rek = lotr_sikepo(vector_store=vector_store_rek, top_n=top_n,
-                                       llm_model=llm_model, embed_model=embed_model, config=config)
+    retriever_sikepo_ket = lotr_sikepo(vector_store=vector_store_ket, top_k=top_k,
+                                    llm_model=llm_model, embed_model=embed_model, config=config)
+    retriever_sikepo_ket_wo_self = lotr_sikepo(vector_store=vector_store_ket, top_k=top_k,
+                                    llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
+    retriever_sikepo_rek = lotr_sikepo(vector_store=vector_store_rek, top_k=top_k,
+                                    llm_model=llm_model, embed_model=embed_model, config=config)
 
     # Reinitialize the chain with the new retrievers
     graph_chain = graph_rag_chain(llm_model, llm_model, graph=graph)
@@ -148,9 +169,22 @@ async def initialize_model(request: ModelRequest):
         retriever_sikepo_ketentuan=retriever_sikepo_ket,
         retriever_sikepo_rekam=retriever_sikepo_rek,
     )
+    chain_wo_self = create_combined_answer_chain(
+        llm_model=llm_model,
+        graph_chain=graph_chain,
+        retriever_ojk=retriever_ojk_wo_self,
+        retriever_bi=retriever_bi,
+        retriever_sikepo_ketentuan=retriever_sikepo_ket_wo_self,
+        retriever_sikepo_rekam=retriever_sikepo_rek,
+    )
 
     chain_history = create_chain_with_chat_history(
         final_chain=chain,
+        chat_store=chat_store,
+    )
+
+    chain_history_wo_self = create_chain_with_chat_history(
+        final_chain=chain_wo_self,
         chat_store=chat_store,
     )
 
@@ -159,17 +193,21 @@ async def initialize_model(request: ModelRequest):
         content={
             "message": "Model and parameters updated successfully",
             "model": model,
-            "top_n": top_n
+            "top_k": top_k
         }
     )
 
 
-@app.get("/chat/{message}")
+@app.get("/chat")
 async def chat_endpoint(message: str, conv_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Get the user ID from the Authorization header
     user_id = credentials.credentials
-    return StreamingResponse(print_answer_stream(message, chain=chain_history, user_id=user_id, conversation_id=conv_id), media_type="text/event-stream")
-
+    try:
+        response =  StreamingResponse(print_answer_stream(message, chain=chain_history, user_id=user_id, conversation_id=conv_id), media_type="text/event-stream")
+        return response
+    except:
+        response =  StreamingResponse(print_answer_stream(message, chain=chain_history_wo_self, user_id=user_id, conversation_id=conv_id), media_type="text/event-stream") 
+        return response
 
 @app.get("/fetch_conversations/")
 async def fetch_conv(credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -199,7 +237,7 @@ async def rename_conversation(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     user_id = credentials.credentials
-    success = chat_store.rename_conversation(user_id, conversation_id, new_title)
+    success = chat_store.rename_title(user_id, conversation_id, new_title)
     if success:
         return JSONResponse(status_code=200, content={"message": "Conversation renamed successfully"})
     else:

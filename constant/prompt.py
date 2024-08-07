@@ -82,5 +82,27 @@ If some specific context says they do not know the answer like "Saya tidak tahu"
 Furthermore, if answer from OJK or BI have sources in format like this: Source: [regulation_number](file_url), please also include it into the new long paragraphs.
 Question: {question}
 
+PLEASE WRITE ALL UNIQUE regulation_number FROM THE CONTEXT AS A REFERENCE FOR THE HUMAN TO LOOK UP THEMSELVES.
+WRTIE AS FOLLOWS:
+Reference OJK:
+[regulation_number](file_url)
+[regulation_number](file_url)
+[regulation_number](file_url)
+...
+[regulation_number](file_url)
+
+Reference BI:
+[regulation_number](file_url)
+[regulation_number](file_url)
+[regulation_number](file_url)
+...
+[regulation_number](file_url)
+
+Reference SIKEPO:
+[Nomor Ketentuan]
+[Nomor Ketentuan]
+...
+[Nomor Ketentuan]
+
 Final Answer:
 """

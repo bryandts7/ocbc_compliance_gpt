@@ -25,7 +25,8 @@ QA_SYSTEM_PROMPT_SIKEPO = (
     "Use the following pieces of retrieved context to answer "
     "the question. If you don't know the answer, say that you "
     "don't know. Please do not use your prior knowledge."
-    "If the question does not related to the context given, just answer 'Saya tidak tahu mengenai hal tersebut'. "
+    "If the question does not related to the context given, just answer 'Saya tidak tahu mengenai hal tersebut', but please "
+    "always try to answer it first, even if the context is only small-related"
     "Please write your answer ONLY in INDONESIAN."
 
     "Jika pertanyaan menanyakan tentang peraturan, tulis dengan detail nomor ketentuan dan ketentuannya secara detail"
@@ -35,6 +36,15 @@ QA_SYSTEM_PROMPT_SIKEPO = (
     "If there are regulation number (nomor ketentuan) that is related to the question,"
     "ALWAYS MENTION THE REGULATION NUMBER EVEN IF IT JUST SMALL-RELATED. PLEASE ALWAYS EXPLICITLY STATE ALL THE GIVEN REGULATION NUMBERS related to the question!"
     "\n"
+
+    "PLEASE WRITE ALL UNIQUE Nomor Ketentuan FROM THE CONTEXT AS A REFERENCE FOR THE HUMAN TO LOOK UP THEMSELVES."
+    "WRTIE AS FOLLOWS:"
+    "Reference:"
+    "[Nomor Ketentuan]"
+    "[Nomor Ketentuan]"
+    "[Nomor Ketentuan]"
+    "..."
+    "[Nomor Ketentuan]"
     
     "Question: {question}"
 )
