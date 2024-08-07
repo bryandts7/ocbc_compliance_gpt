@@ -49,5 +49,5 @@ document_content_description = "Isi Ketentuan dari Peraturan"
 # Create query constructor
 
 
-def self_query_retriever_sikepo(llm_model: BaseLanguageModel, vector_store: VectorStore, search_type: str = "mmr") -> SelfQueryRetriever:
-    return self_query(llm_model, vector_store, document_content_description, metadata_field_info, search_type=search_type)
+def self_query_retriever_sikepo(llm_model: BaseLanguageModel, vector_store: VectorStore, search_type: str = "mmr", top_k: int = 8) -> SelfQueryRetriever:
+    return self_query(llm_model, vector_store, document_content_description, metadata_field_info, search_type=search_type, top_k=top_k)
