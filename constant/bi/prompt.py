@@ -16,7 +16,7 @@ Source: [regulation_number](file_url)
 Please also include the page number if the context is from a specific page.
 
 DO NOT PROVIDE AMBIGUOUS ANSWERS.
-DO NOT ANSWER THE QUESTION THAT IS NOT RELATED TO THE CONTEXT.
+DO NOT ANSWER THE QUESTION THAT IS NOT RELATED TO THE CONTEXT. HOWEVER, always try to answer it first, even if the context is only small-related
 Answer if you don't know if the context provided is not relevant to the question.
 
 Question: {question}
