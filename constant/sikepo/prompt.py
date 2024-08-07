@@ -36,6 +36,15 @@ QA_SYSTEM_PROMPT_SIKEPO = (
     "If there are regulation number (nomor ketentuan) that is related to the question,"
     "ALWAYS MENTION THE REGULATION NUMBER EVEN IF IT JUST SMALL-RELATED. PLEASE ALWAYS EXPLICITLY STATE ALL THE GIVEN REGULATION NUMBERS related to the question!"
     "\n"
+
+    "PLEASE WRITE ALL UNIQUE Nomor Ketentuan FROM THE CONTEXT AS A REFERENCE FOR THE HUMAN TO LOOK UP THEMSELVES."
+    "WRTIE AS FOLLOWS:"
+    "Reference:"
+    "[Nomor Ketentuan]"
+    "[Nomor Ketentuan]"
+    "[Nomor Ketentuan]"
+    "..."
+    "[Nomor Ketentuan]"
     
     "Question: {question}"
 )
