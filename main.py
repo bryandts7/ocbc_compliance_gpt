@@ -195,11 +195,11 @@ async def fetch_message(conversation_id: str, credentials: HTTPAuthorizationCred
 @app.put("/rename_conversation/{conversation_id}")
 async def rename_conversation(
     conversation_id: str, 
-    new_conversation_id: str = Query(..., description="New title for the conversation"),
+    new_title: str = Query(..., description="New title for the conversation"),
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     user_id = credentials.credentials
-    success = chat_store.rename_conversation(user_id, conversation_id, new_conversation_id)
+    success = chat_store.rename_title(user_id, conversation_id, new_title)
     if success:
         return JSONResponse(status_code=200, content={"message": "Conversation renamed successfully"})
     else:

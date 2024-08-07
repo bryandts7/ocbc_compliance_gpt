@@ -1,8 +1,8 @@
 from typing import List, Dict, Tuple, Optional
 from langchain.schema import BaseMessage
+import time
 import logging
 import json
-import time
 
 from elasticsearch import Elasticsearch, exceptions as es_exceptions
 from langchain_community.chat_message_histories import ElasticsearchChatMessageHistory
@@ -15,13 +15,14 @@ from langchain_core.messages import (
 logger = logging.getLogger(__name__)
 
 # ========== ELASTICSEARCH ==========
-
 class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
     def __init__(
         self,
         index: str,
         session_id: str,
-        k: int = 5,
+        user_id: str,
+        conversation_id: str,
+        title: str = None,
         *,
         es_connection: Optional["Elasticsearch"] = None,
         es_url: Optional[str] = None,
@@ -33,8 +34,10 @@ class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
     ):
         self.index: str = index
         self.session_id: str = session_id
+        self.user_id: str = user_id
+        self.conversation_id: str = conversation_id
         self.ensure_ascii = ensure_ascii
-        self.k = k
+        self.title = title
 
         # Initialize Elasticsearch client from passed client arg or connection info
         if es_connection is not None:
@@ -67,6 +70,8 @@ class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
                 mappings={
                     "properties": {
                         "session_id": {"type": "keyword"},
+                        "user_id": {"type": "keyword"},
+                        "conversation_id": {"type": "keyword"},
                         "title": {"type": "text"},
                         "created_at": {"type": "date"},
                         "history": {"type": "text"},
@@ -79,25 +84,14 @@ class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
         try:
             from elasticsearch import ApiError
 
-            # check if the session_id already exists
-            result = self.client.search(
-                index=self.index,
-                query={"term": {"session_id": self.session_id}},
-                size=1
-            )
-
-            # if the session_id already exists, use the existing title
-            if result and len(result["hits"]["hits"]) > 0:
-                title = result["hits"]["hits"][0]["_source"]["title"]
-            else:
-                title = message_to_dict(message)['content'][:25] + '...' if len(message_to_dict(message)['content']) > 25 else message_to_dict(message)['content'] + '...'
-
             self.client.index(
                 index=self.index,
                 document={
                     "session_id": self.session_id,
+                    "user_id": self.user_id,
+                    "conversation_id": self.conversation_id,
+                    "title": message_to_dict(message)['content'][:25] + '...' if len(message_to_dict(message)['content']) > 25 else message_to_dict(message)['content'] + '...',
                     "created_at": round(time() * 1000),
-                    "title": title,
                     "history": json.dumps(
                         message_to_dict(message),
                         ensure_ascii=bool(self.ensure_ascii),
@@ -150,7 +144,7 @@ class ElasticChatStore:
         self.host = config["es_uri"]
         self.user = config["es_username"]
         self.password = config["es_password"]
-        self.index_name = "chat_history"
+        self.index_name = "chat_history_temp"
         self.k = k
 
         self.es_client = Elasticsearch(
@@ -161,20 +155,21 @@ class ElasticChatStore:
         )
 
     def get_session_history(self, user_id: str, conversation_id: str) -> LimitedElasticsearchChatMessageHistory:
-        session_id = f"{user_id}:{conversation_id}"
         history = LimitedElasticsearchChatMessageHistory(
             k=self.k,
             es_connection=self.es_client,
             index=self.index_name,
-            session_id=session_id
+            user_id=user_id,
+            conversation_id=conversation_id,
+            session_id=f"{user_id}:{conversation_id}",
         )
         return history
 
     def get_conversation_ids_by_user_id(self, user_id: str) -> List[dict]:
         query = {
             "query": {
-                "prefix": {
-                    "session_id": f"{user_id}:"
+                "term": {
+                    "user_id": user_id
                 }
             },
             "sort": [
@@ -184,21 +179,27 @@ class ElasticChatStore:
         results = self.es_client.search(
             index=self.index_name, body=query, size=10000
         )
-        formatted_result = []
-
         conversation_ids = {}
         for hit in results['hits']['hits']:
-            session_id = hit['_source']['session_id']
-            _, conversation_id = session_id.split(':', 1)
-            
+            conversation_id = hit['_source']['conversation_id']
             if conversation_id not in conversation_ids:
-                conversation_ids[conversation_id] = hit['_source']['title']
+                conversation_ids[conversation_id] = hit['_source']['history']
+            else:
+                # Update to the most recent message
+                conversation_ids[conversation_id] = hit['_source']['history']
 
-        for conv_id, title in conversation_ids.items():
+        # Format result
+        formatted_result = []
+        for conv_id, last_message_str in conversation_ids.items():
+            last_message = json.loads(last_message_str)
+            content = last_message["data"]["content"]
+            title = (content[:25] + '...') if len(content) > 25 else content
             formatted_result.append({
                 "id": conv_id,
                 "title": title
             })
+
+        return formatted_result
 
     def get_conversation(self, user_id: str, conversation_id: str) -> List[dict]:
         session_id = f"{user_id}:{conversation_id}"
@@ -241,6 +242,11 @@ class ElasticChatStore:
         query = {"query": {"prefix": {"session_id": f"{user_id}:"}}}
         self.es_client.delete_by_query(index=self.index_name, body=query)
 
+    def add_message_to_history(self, user_id: str, conversation_id: str, message: BaseMessage) -> None:
+        """Add a message to the session history for a given user and conversation."""
+        history = self.get_session_history(user_id, conversation_id)
+        history.add_message(message)
+
     def clear_all(self) -> None:
         """Clear all session histories."""
         try:
@@ -248,13 +254,28 @@ class ElasticChatStore:
         except es_exceptions.NotFoundError:
             pass  # Index doesn't exist, so no need to delete
 
-    def rename_title(self, user_id: str, conversation_id: str, new_title: str) -> bool:
-        session_id = f"{user_id}:{conversation_id}"
+    def get_all_history(self) -> Dict[Tuple[str, str], List[BaseMessage]]:
+        all_history = {}
+        query = {"query": {"match_all": {}},
+                 "size": 10000}  # Adjust size as needed
+        results = self.es_client.search(index=self.index_name, body=query)
+
+        for hit in results['hits']['hits']:
+            session_id = hit['_source']['session_id']
+            user_id, conversation_id = session_id.split(':', 1)
+            history = self.get_session_history(user_id, conversation_id)
+            all_history[(user_id, conversation_id)] = history.messages
+
+        return all_history
+
+    def rename_conversation(self, user_id: str, old_conversation_id: str, new_conversation_id: str) -> bool:
+        old_session_id = f"{user_id}:{old_conversation_id}"
+        new_session_id = f"{user_id}:{new_conversation_id}"
     
         query = {
             "query": {
                 "term": {
-                    "session_id": session_id
+                    "session_id": old_session_id
                 }
             }
         }
@@ -268,7 +289,7 @@ class ElasticChatStore:
             doc_id = hit['_id']
             update_body = {
                 "doc": {
-                    "title": new_title
+                    "session_id": new_session_id
                 }
             }
             self.es_client.update(index=self.index_name, id=doc_id, body=update_body)
