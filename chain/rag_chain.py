@@ -1,5 +1,5 @@
 from operator import itemgetter
-from database.chat_store import MongoDBChatStore, RedisChatStore, ElasticChatStore
+from database.chat_store import ElasticChatStore
 from langchain_core.runnables import ConfigurableFieldSpec, RunnablePassthrough, RunnableLambda, RunnableBranch, RunnableParallel
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables.history import RunnableWithMessageHistory
@@ -231,7 +231,7 @@ def create_combined_context_chain(retriever_ojk: BaseRetriever, retriever_sikepo
 
 
 # ===== INI MASIH OJK AJA, NTAR GABUNGING SEMUA LOGIC CHAIN NYA DISINI =====
-def create_chain_with_chat_history(chat_store: Union[MongoDBChatStore, RedisChatStore, ElasticChatStore], final_chain: Runnable):
+def create_chain_with_chat_history(chat_store: ElasticChatStore, final_chain: Runnable):
     final_chain = RunnableWithMessageHistory(
         final_chain,
         get_session_history=chat_store.get_session_history,

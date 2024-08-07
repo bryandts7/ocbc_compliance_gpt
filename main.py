@@ -11,7 +11,7 @@ from database.vector_store.neo4j_graph_store import Neo4jGraphStore
 from retriever.retriever_ojk.retriever_ojk import get_retriever_ojk
 from retriever.retriever_bi.retriever_bi import get_retriever_bi
 from retriever.retriever_sikepo.lotr_sikepo import lotr_sikepo
-from database.chat_store import ElasticChatStore, RedisChatStore
+from database.chat_store import ElasticChatStore
 from chain.rag_chain import create_combined_answer_chain, create_chain_with_chat_history, print_answer_stream
 from chain.chain_sikepo.graph_cypher_sikepo_chain import graph_rag_chain
 from chain.rag_chain import get_response
@@ -233,11 +233,11 @@ async def fetch_message(conversation_id: str, credentials: HTTPAuthorizationCred
 @app.put("/rename_conversation/{conversation_id}")
 async def rename_conversation(
     conversation_id: str, 
-    new_conversation_id: str = Query(..., description="New title for the conversation"),
+    new_title: str = Query(..., description="New title for the conversation"),
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     user_id = credentials.credentials
-    success = chat_store.rename_conversation(user_id, conversation_id, new_conversation_id)
+    success = chat_store.rename_title(user_id, conversation_id, new_title)
     if success:
         return JSONResponse(status_code=200, content={"message": "Conversation renamed successfully"})
     else:
