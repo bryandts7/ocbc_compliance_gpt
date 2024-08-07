@@ -203,7 +203,7 @@ async def chat_endpoint(message: str, conv_id: str, credentials: HTTPAuthorizati
     # Get the user ID from the Authorization header
     user_id = credentials.credentials
     try:
-        response =  StreamingResponse(await print_answer_stream(message, chain=chain_history, user_id=user_id, conversation_id=conv_id), media_type="text/event-stream")
+        response =  StreamingResponse(print_answer_stream(message, chain=chain_history, user_id=user_id, conversation_id=conv_id), media_type="text/event-stream")
         return response
     except:
         response =  StreamingResponse(print_answer_stream(message, chain=chain_history_wo_self, user_id=user_id, conversation_id=conv_id), media_type="text/event-stream") 

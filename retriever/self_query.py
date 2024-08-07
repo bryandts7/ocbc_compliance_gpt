@@ -8,16 +8,21 @@ from langchain.retrievers.self_query.base import SelfQueryRetriever
 from langchain_core.vectorstores import VectorStore
 from typing import Sequence, Union
 from langchain_core.prompts import BasePromptTemplate
+from langchain_community.query_constructors.elasticsearch import ElasticsearchTranslator
 
 from constant.prompt import DEFAULT_SCHEMA_PROMPT
 
 
 def self_query(llm_model: BaseLanguageModel, vector_store: VectorStore, document_content_description: str, metadata_field_info: Sequence[Union[AttributeInfo, dict]], search_type: str = "similarity", schema_prompt: BasePromptTemplate = DEFAULT_SCHEMA_PROMPT) -> SelfQueryRetriever:
+    es_translator = ElasticsearchTranslator()
     prompt = get_query_constructor_prompt(
         document_contents=document_content_description,
         attribute_info=metadata_field_info,
         schema_prompt=schema_prompt,
+        allowed_comparators=es_translator.allowed_comparators,
+        allowed_operators=es_translator.allowed_operators
     )
+    
     output_parser = StructuredQueryOutputParser.from_components()
     query_constructor = prompt | llm_model | output_parser
 
