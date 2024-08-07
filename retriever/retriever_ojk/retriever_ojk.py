@@ -8,7 +8,7 @@ from langchain_community.document_transformers import (
     EmbeddingsRedundantFilter,
 )
 from langchain.retrievers.document_compressors.flashrank_rerank import FlashrankRerank
-from langchain_community.document_compressors.rankllm_rerank import RankLLMRerank
+# from langchain_community.document_compressors.rankllm_rerank import RankLLMRerank
 from langchain.retrievers.document_compressors.base import DocumentCompressorPipeline
 from langchain.chains.query_constructor.base import AttributeInfo
 from langchain.retrievers.self_query.base import SelfQueryRetriever
@@ -56,8 +56,8 @@ def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, e
     # rerank with Cohere
     # compressor = CohereRerank(
     #     cohere_api_key=config['cohere_api_key'], top_n=top_n, model="rerank-multilingual-v3.0")
-    # compressor = FlashrankRerank(top_n=top_n)
-    compressor = RankLLMRerank(top_n=top_n, model="gpt", gpt_model="gpt-3.5-turbo")
+    compressor = FlashrankRerank(top_n=top_n)
+    # compressor = RankLLMRerank(top_n=top_n, model="gpt", gpt_model="gpt-3.5-turbo")
     
     retriever = ContextualCompressionRetriever(
         base_compressor=compressor, base_retriever=compression_retriever

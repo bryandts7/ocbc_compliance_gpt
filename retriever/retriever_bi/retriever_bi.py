@@ -37,8 +37,8 @@ def get_retriever_bi(vector_store: VectorStore, llm_model: BaseLanguageModel, em
     # rerank with Cohere
     # compressor = CohereRerank(
     #     cohere_api_key=config['cohere_api_key'], top_n=top_n, model="rerank-multilingual-v3.0")
-    # compressor = FlashrankRerank(top_n=top_n)
-    compressor = RankLLMRerank(top_n=top_n, model="gpt", gpt_model="gpt-3.5-turbo")
+    compressor = FlashrankRerank(top_n=top_n)
+    # compressor = RankLLMRerank(top_n=top_n, model="gpt", gpt_model="gpt-3.5-turbo")
     
     retriever = ContextualCompressionRetriever(
         base_compressor=compressor, base_retriever=compression_retriever
