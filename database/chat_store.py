@@ -297,3 +297,13 @@ class ElasticChatStore:
             self.es_client.update(index=self.index_name, id=doc_id, body=update_body)
         
         return True
+
+    def clear_conversation_by_userid(self, user_id: str) -> bool:
+        """Clear all conversations for a given user."""
+        query = {"query": {"prefix": {"session_id": f"{user_id}:"}}}
+        try:
+            response = self.es_client.delete_by_query(index=self.index_name, body=query, refresh=True)
+            return response.get('deleted', 0) > 0
+        except Exception as e:
+            logger.error(f"Error deleting all chats for user {user_id}: {e}")
+            return False

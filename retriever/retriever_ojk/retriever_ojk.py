@@ -8,7 +8,7 @@ from langchain_community.document_transformers import (
     EmbeddingsRedundantFilter,
 )
 from langchain.retrievers.document_compressors.flashrank_rerank import FlashrankRerank
-from langchain_community.document_compressors.rankllm_rerank import RankLLMRerank
+# from langchain_community.document_compressors.rankllm_rerank import RankLLMRerank
 from langchain.retrievers.document_compressors.base import DocumentCompressorPipeline
 from langchain.chains.query_constructor.base import AttributeInfo
 from langchain.retrievers.self_query.base import SelfQueryRetriever
