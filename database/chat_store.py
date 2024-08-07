@@ -1,22 +1,23 @@
-from typing import List, Dict, Tuple, Optional
-from langchain.schema import BaseMessage
+from typing import List, Tuple, Optional
 import logging
 import json
-import time
+from time import time
 
 from elasticsearch import Elasticsearch, exceptions as es_exceptions
-from langchain_community.chat_message_histories import ElasticsearchChatMessageHistory
-from langchain_core.messages import (
-    BaseMessage,
-    message_to_dict,
-    messages_from_dict,
-)
+from langchain_core.messages import BaseMessage, message_to_dict, messages_from_dict
+from langchain_core.chat_history import BaseChatMessageHistory
+
+from langchain_elasticsearch.chat_history import ElasticsearchChatMessageHistory
+
+from langchain_elasticsearch.client import create_elasticsearch_client
+from langchain_elasticsearch._utilities import with_user_agent_header
 
 logger = logging.getLogger(__name__)
 
+
 # ========== ELASTICSEARCH ==========
 
-class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
+class CustomElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
     def __init__(
         self,
         index: str,
@@ -29,31 +30,35 @@ class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
         es_user: Optional[str] = None,
         es_api_key: Optional[str] = None,
         es_password: Optional[str] = None,
-        ensure_ascii: Optional[bool] = True,
+        esnsure_ascii: Optional[bool] = True,
     ):
         self.index: str = index
         self.session_id: str = session_id
-        self.ensure_ascii = ensure_ascii
+        self.ensure_ascii = esnsure_ascii
         self.k = k
 
         # Initialize Elasticsearch client from passed client arg or connection info
         if es_connection is not None:
-            self.client = es_connection.options(
-                headers={"user-agent": self.get_user_agent()}
-            )
+            self.client = es_connection
         elif es_url is not None or es_cloud_id is not None:
-            self.client = ElasticsearchChatMessageHistory.connect_to_elasticsearch(
-                es_url=es_url,
-                username=es_user,
-                password=es_password,
-                cloud_id=es_cloud_id,
-                api_key=es_api_key,
-            )
+            try:
+                self.client = create_elasticsearch_client(
+                    url=es_url,
+                    username=es_user,
+                    password=es_password,
+                    cloud_id=es_cloud_id,
+                    api_key=es_api_key,
+                )
+            except Exception as err:
+                logger.error(f"Error connecting to Elasticsearch: {err}")
+                raise err
         else:
             raise ValueError(
                 """Either provide a pre-existing Elasticsearch connection, \
                 or valid credentials for creating a new connection."""
             )
+
+        self.client = with_user_agent_header(self.client, "langchain-py-ms")
 
         if self.client.indices.exists(index=index):
             logger.debug(
@@ -73,41 +78,6 @@ class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
                     }
                 },
             )
-
-    def add_message(self, message: BaseMessage) -> None:
-        """Add a message to the chat session in Elasticsearch"""
-        try:
-            from elasticsearch import ApiError
-
-            # check if the session_id already exists
-            result = self.client.search(
-                index=self.index,
-                query={"term": {"session_id": self.session_id}},
-                size=1
-            )
-
-            # if the session_id already exists, use the existing title
-            if result and len(result["hits"]["hits"]) > 0:
-                title = result["hits"]["hits"][0]["_source"]["title"]
-            else:
-                title = message_to_dict(message)['content'][:25] + '...' if len(message_to_dict(message)['content']) > 25 else message_to_dict(message)['content'] + '...'
-
-            self.client.index(
-                index=self.index,
-                document={
-                    "session_id": self.session_id,
-                    "created_at": round(time() * 1000),
-                    "title": title,
-                    "history": json.dumps(
-                        message_to_dict(message),
-                        ensure_ascii=bool(self.ensure_ascii),
-                    ),
-                },
-                refresh=True,
-            )
-        except ApiError as err:
-            logger.error(f"Could not add message to Elasticsearch: {err}")
-            raise err
 
     @property
     def messages(self) -> List[BaseMessage]:
@@ -142,6 +112,59 @@ class LimitedElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
         last_k_human_ai_messages.reverse()
         return last_k_human_ai_messages
 
+    def add_message(self, message: BaseMessage) -> None:
+        """Add a message to the chat session in Elasticsearch"""
+        try:
+            from elasticsearch import ApiError
+
+            # check if the index exists
+            if not self.client.indices.exists(index=self.index):
+                logger.debug(f"Creating index {self.index} for storing chat history.")
+                self.client.indices.create(
+                    index=self.index,
+                    mappings={
+                        "properties": {
+                            "session_id": {"type": "keyword"},
+                            "title": {"type": "text"},
+                            "created_at": {"type": "date"},
+                            "history": {"type": "text"},
+                        }
+                    },
+                )
+
+            # check if the session_id exists, if exists use the title
+            query = {
+                "query": {
+                    "term": {
+                        "session_id": self.session_id
+                    }
+                }
+            }
+            results = self.client.search(index=self.index, body=query, size=1)
+            if results['hits']['total']['value'] == 0:
+                title = message_to_dict(message)['data']['content'][:25] + "..." if len(message_to_dict(message)['data']['content']) > 25 else message_to_dict(message)['data']['content'] + "..."
+            else:
+                title = results['hits']['hits'][0]['_source']['title']
+
+            self.client.index(
+                index=self.index,
+                document={
+                    "session_id": self.session_id,
+                    "title": title,
+                    "created_at": round(time() * 1000),
+                    "history": json.dumps(
+                        message_to_dict(message),
+                        ensure_ascii=bool(self.ensure_ascii),
+                    ),
+                },
+                refresh=True,
+            )
+        except ApiError as err:
+            logger.error(f"Could not add message to Elasticsearch: {err}")
+            raise err
+
+
+# ========== CHAT STORE ==========
 
 class ElasticChatStore:
     """A store for managing chat histories using Elasticsearch."""
@@ -150,7 +173,7 @@ class ElasticChatStore:
         self.host = config["es_uri"]
         self.user = config["es_username"]
         self.password = config["es_password"]
-        self.index_name = "chat_history"
+        self.index_name = "chat_history2"
         self.k = k
 
         self.es_client = Elasticsearch(
@@ -160,9 +183,9 @@ class ElasticChatStore:
             verify_certs=False
         )
 
-    def get_session_history(self, user_id: str, conversation_id: str) -> LimitedElasticsearchChatMessageHistory:
+    def get_session_history(self, user_id: str, conversation_id: str) -> CustomElasticsearchChatMessageHistory:
         session_id = f"{user_id}:{conversation_id}"
-        history = LimitedElasticsearchChatMessageHistory(
+        history = CustomElasticsearchChatMessageHistory(
             k=self.k,
             es_connection=self.es_client,
             index=self.index_name,
@@ -184,21 +207,22 @@ class ElasticChatStore:
         results = self.es_client.search(
             index=self.index_name, body=query, size=10000
         )
-        formatted_result = []
+        
 
-        conversation_ids = {}
+        #  return unique conversation ids and their titles, keep the first one
+        formatted_result = []
+        conversation_ids = set()
         for hit in results['hits']['hits']:
             session_id = hit['_source']['session_id']
-            _, conversation_id = session_id.split(':', 1)
-            
+            conversation_id = session_id.split(":")[1]
             if conversation_id not in conversation_ids:
-                conversation_ids[conversation_id] = hit['_source']['title']
+                conversation_ids.add(conversation_id)
+                formatted_result.append({
+                    "id": conversation_id,
+                    "title": hit['_source']['title']
+                })
 
-        for conv_id, title in conversation_ids.items():
-            formatted_result.append({
-                "id": conv_id,
-                "title": title
-            })
+        return formatted_result
 
     def get_conversation(self, user_id: str, conversation_id: str) -> List[dict]:
         session_id = f"{user_id}:{conversation_id}"
@@ -234,7 +258,6 @@ class ElasticChatStore:
             return response.get('deleted', 0) > 0
         except Exception as e:
             return False
-
 
     def clear_session_history_by_userid(self, user_id: str) -> None:
         """Clear the session history for a given user."""
