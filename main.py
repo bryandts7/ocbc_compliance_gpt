@@ -198,7 +198,7 @@ async def initialize_model(request: ModelRequest):
     )
 
 
-@app.get("/chat/{message}")
+@app.get("/chat")
 async def chat_endpoint(message: str, conv_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Get the user ID from the Authorization header
     user_id = credentials.credentials
