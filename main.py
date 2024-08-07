@@ -213,7 +213,15 @@ async def delete_conversation(conversation_id: str, credentials: HTTPAuthorizati
         return JSONResponse(status_code=200, content={"message": "Conversation deleted successfully"})
     else:
         raise HTTPException(status_code=404, detail="Conversation not found")
-
+    
+@app.delete("/delete_all_conversations/")
+async def delete_all_user_chats(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    user_id = credentials.credentials
+    success = chat_store.clear_conversation_by_userid(user_id)
+    if success:
+        return JSONResponse(status_code=200, content={"message": "All conversations deleted successfully"})
+    else:
+        raise HTTPException(status_code=404, detail="No conversations found for the user")
 
 if __name__ == "__main__":
     import uvicorn
