@@ -19,7 +19,7 @@ from langchain_core.embeddings import Embeddings
 from retriever.retriever_ojk.self_query_ojk import self_query_ojk
 
 
-def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, top_n: int = 7, config: dict = {}, with_self_query: bool = True):
+def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, top_k: int = 8, config: dict = {}, with_self_query: bool = True):
 
     retriever_self_query_similarity = self_query_ojk(
         llm_model=llm_model,
@@ -35,11 +35,11 @@ def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, e
 
     retriever_similarity = vector_store.as_retriever(
         search_type="similarity",
-        search_kwargs={'k': 8}
+        search_kwargs={'k': top_k}
     )
     retriever_mmr = vector_store.as_retriever(
         search_type="mmr",
-        search_kwargs={'k': 8, 'lambda_mult': 0.25}
+        search_kwargs={'k': top_k, 'lambda_mult': 0.25}
     )
 
     lotr = MergerRetriever(retrievers=[retriever_similarity, retriever_mmr])

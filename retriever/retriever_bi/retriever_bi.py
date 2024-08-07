@@ -15,15 +15,15 @@ from langchain_core.vectorstores import VectorStore
 # all_documents = pickle.load(all_documents_file)
 
 
-def get_retriever_bi(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, top_n: int = 7, config: dict = {}):
+def get_retriever_bi(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, top_k: int = 8, config: dict = {}):
 
     retriever_similarity = vector_store.as_retriever(
         search_type="similarity",
-        search_kwargs={'k': 8}
+        search_kwargs={'k': top_k}
     )
     retriever_mmr = vector_store.as_retriever(
         search_type="mmr",
-        search_kwargs={'k': 8, 'lambda_mult': 0.25}
+        search_kwargs={'k': top_k, 'lambda_mult': 0.25}
     )
 
     # merge retrievers

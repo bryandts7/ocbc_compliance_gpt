@@ -24,10 +24,10 @@ from retriever.retriever_sikepo.self_query_sikepo import self_query_retriever_si
 # untuk chain di folder terpisah soalnya responsibility nya beda
 
 
-def lotr_sikepo(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, config: dict = {}, top_n: int = 8, with_self_query: bool = True):
+def lotr_sikepo(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, config: dict = {}, top_k: int = 8, with_self_query: bool = True):
 
-    retriever_mmr = vector_store.as_retriever(search_type="mmr", search_kwargs={'k': 8, 'lambda_mult': 0.25})
-    retriever_similarity = vector_store.as_retriever(search_type="similarity", search_kwargs={'k': 8})
+    retriever_mmr = vector_store.as_retriever(search_type="mmr", search_kwargs={'k': top_k, 'lambda_mult': 0.25})
+    retriever_similarity = vector_store.as_retriever(search_type="similarity", search_kwargs={'k': top_k})
     self_query_retriever = self_query_retriever_sikepo(
         llm_model=llm_model, vector_store=vector_store)
     # bm25_retriever = bm25_retriever_sikepo() # ini fungsinya belom di define yee, jadi gak bisa dipanggil, define di `retriver/retriever_sikepo/bm25_retriever_sikepo.py

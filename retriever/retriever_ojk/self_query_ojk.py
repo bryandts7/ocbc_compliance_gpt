@@ -33,12 +33,12 @@ metadata_field_info = [
     ),
     AttributeInfo(
         name="regulation_number",
-        description="The number of the regulation",
+        description="The number of the regulation (nomor ketentuan, nomor regulasi, nomor peraturan)",
         type="string",
     ),
     AttributeInfo(
         name="effective_date",
-        description="The effective date of the regulation",
+        description="The effective date of the regulation (tanggal berlakunya peraturan/ketentuan)",
         type="date",
     ),
 ]
