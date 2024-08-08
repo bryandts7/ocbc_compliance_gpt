@@ -5,7 +5,6 @@ from time import time
 
 from elasticsearch import Elasticsearch, exceptions as es_exceptions
 from langchain_core.messages import BaseMessage, message_to_dict, messages_from_dict
-from langchain_core.chat_history import BaseChatMessageHistory
 
 from langchain_elasticsearch.chat_history import ElasticsearchChatMessageHistory
 
