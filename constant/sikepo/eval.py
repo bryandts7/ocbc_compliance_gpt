@@ -13,8 +13,22 @@ EVAL_QUESTIONS = [
     "Berapa lama pihak yang membeli saham Bank Perantara dapat memiliki saham Bank melebihi batas maksimum kepemilikan saham?",
     "Apa yang dimaksud dengan penerapan manajemen risiko dalam konteks Rencana Bisnis Bank Umum?",
     "Apa saja yang harus dicakup dalam uraian kinerja keuangan Bank Umum?",
-    "Apa yang diuraikan dalam realisasi pemberian kredit kepada Usaha Mikro, Kecil, dan Menengah (UMKM)?"
-
+    "Apa yang diuraikan dalam realisasi pemberian kredit kepada Usaha Mikro, Kecil, dan Menengah (UMKM)?",
+    "Parameter apa yang digunakan untuk menilai infrastruktur TI Bank dalam mendukung Layanan Digital?",
+    "Apa yang harus dilakukan Bank jika terjadi perbedaan penetapan kualitas Aset antara Bank dengan Otoritas Jasa Keuangan?",
+    "Apa saja faktor penilaian yang digunakan dalam menetapkan kualitas Pembiayaan",
+    "Apa saja komponen yang dinilai dalam penilaian terhadap prospek usaha?",
+    "Apa saja yang dinilai dalam penilaian terhadap kemampuan membayar?",
+    "Apa yang harus dilakukan Bank jika menambahkan fitur Quick Response Code Indonesian Standard/QRIS dalam aplikasi mobile banking yang sudah ada?",
+    "Bagaimana mekanisme yang harus diikuti Bank jika mengembangkan aplikasi baru untuk pendaftaran uang elektronik?",
+    "Apa kewajiban Bank dalam menerapkan autentikasi untuk verifikasi transaksi keuangan?",
+    "Apa yang wajib dimiliki Bank dalam menyelenggarakan Layanan Digital?",
+    "Apa kriteria yang harus dipenuhi nasabah agar dapat melakukan restrukturisasi pembiayaan?",
+    "Sebutkan tiga metode restrukturisasi pembiayaan yang dapat dilakukan Bank?",
+    "Apa saja yang dapat dilakukan dalam metode persyaratan kembali (reconditioning) dalam restrukturisasi pembiayaan?",
+    "Apa yang dimaksud dengan penataan kembali (restructuring) dalam restrukturisasi pembiayaan?",
+    "Apa yang harus dilakukan Bank sebelum menyediakan jasa Cross Border Correspondent Banking?",
+    "Apa saja informasi yang harus diminta oleh Bank dalam proses CDD terhadap calon Bank Penerima dan/atau Bank Penerus?"
 ]
 
 EVAL_ANSWERS = [
@@ -32,6 +46,20 @@ EVAL_ANSWERS = [
     "Pihak yang membeli saham Bank Perantara dapat memiliki saham Bank melebihi batas maksimum kepemilikan saham paling lama 20 (dua puluh) tahun sejak pembelian saham Bank Perantara dari LPS.",
     "Penerapan manajemen risiko dalam konteks Rencana Bisnis Bank Umum mencakup penjelasan kuantitatif dan kualitatif mengenai kondisi Bank pada saat penyusunan Rencana Bisnis. Ini termasuk evaluasi penerapan manajemen risiko, profil risiko, dan efektivitas serta hasil penerapan ketentuan terkait Anti Pencucian Uang dan Pencegahan Pendanaan Terorisme (APU dan PPT) serta fungsi kepatuhan Bank.",
     "Uraian kinerja keuangan Bank Umum harus mencakup:\n 1. Hasil pelaksanaan rencana tindak (action plan) untuk memperbaiki kinerja Bank.\n 2. Kinerja permodalan, termasuk kecukupan, komposisi, dan kemampuan modal Bank untuk mengcover risiko, mendukung pertumbuhan usaha, dan akses kepada sumber permodalan.\n 3. Kinerja rentabilitas, termasuk pencapaian ROA, ROE, NIM, perkembangan laba operasional, rasio BOPO, dan rasio beban operasional selain bunga terhadap pendapatan kegiatan utama.",
-    "Uraian mengenai realisasi pemberian kredit mencerminkan peranan Bank Umum dalam mendukung perkembangan UMKM, dengan pengelompokan UMKM mengacu pada kriteria usaha berdasarkan Undang-Undang yang mengatur mengenai usaha mikro, kecil, dan menengah."
-
+    "Uraian mengenai realisasi pemberian kredit mencerminkan peranan Bank Umum dalam mendukung perkembangan UMKM, dengan pengelompokan UMKM mengacu pada kriteria usaha berdasarkan Undang-Undang yang mengatur mengenai usaha mikro, kecil, dan menengah.",
+    "Parameter yang digunakan antara lain penilaian tingkat maturitas digital Bank (digital maturity assessment for banks/DMAB) dan parameter terkait penerapan penyelenggaraan TI sesuai dengan Peraturan Otoritas Jasa Keuangan mengenai penyelenggaraan TI oleh Bank.",
+    "Kualitas Aset yang berlaku adalah yang ditetapkan oleh Otoritas Jasa Keuangan, dan Bank wajib menyesuaikan kualitas Aset sesuai dengan penetapan Otoritas Jasa Keuangan dalam laporan yang disampaikan kepada Otoritas Jasa Keuangan dan laporan publikasi pada periode laporan berikutnya setelah pemberitahuan tertulis dari Otoritas Jasa Keuangan.",
+    "Faktor penilaian yang digunakan dalam menetapkan kualitas Pembiayaan adalah prospek usaha, kinerja nasabah, dan kemampuan membayar.",
+    "Komponen yang dinilai dalam penilaian terhadap prospek usaha meliputi potensi pertumbuhan usaha, kondisi pasar dan posisi nasabah dalam persaingan, kualitas manajemen dan permasalahan tenaga kerja, dukungan dari kelompok usaha atau afiliasi, dan upaya yang dilakukan nasabah untuk memelihara lingkungan hidup.",
+    "Penilaian terhadap kemampuan membayar meliputi ketepatan pembayaran pokok dan bagi hasil/ujrah/margin, ketersediaan dan keakuratan informasi keuangan nasabah, kelengkapan dokumentasi Pembiayaan, kepatuhan terhadap perjanjian Pembiayaan, kesesuaian penggunaan dana, dan kewajaran sumber pembayaran kewajiban.",
+    "Penambahan fitur Quick Response Code Indonesian Standard/QRIS dalam aplikasi mobile banking yang sudah ada mengikuti mekanisme penyelenggaraan produk Bank dasar sesuai dengan Peraturan Otoritas Jasa Keuangan mengenai penyelenggaraan produk bank umum.",
+    "Pengembangan aplikasi baru untuk pendaftaran uang elektronik yang membutuhkan izin otoritas sistem pembayaran serta hanya memiliki fitur terkait dengan produk sistem pembayaran, mengikuti mekanisme penyelenggaraan produk Bank dasar sesuai dengan Peraturan Otoritas Jasa Keuangan mengenai penyelenggaraan produk bank umum.",
+    "Bank wajib menerapkan paling sedikit 2 (dua) faktor autentikasi (two factor authentication) untuk verifikasi transaksi keuangan.",
+    "Bank wajib memiliki: \n a. kebijakan dan prosedur dalam penentuan mitra Bank; dan \nb. perjanjian kerja sama secara tertulis dengan mitra Bank yang disusun dengan menggunakan Bahasa Indonesia.",
+    "Nasabah harus memenuhi kriteria sebagai berikut: \na. Nasabah mengalami penurunan kemampuan membayar; dan \nb. Nasabah memiliki prospek usaha yang baik dan mampu memenuhi kewajiban setelah restrukturisasi.",
+    "Tiga metode restrukturisasi pembiayaan yang dapat dilakukan adalah: \na. Penjadwalan kembali (rescheduling) \nb. Persyaratan kembali (reconditioning) \nc. Penataan kembali (restructuring).",
+    "Dalam metode persyaratan kembali (reconditioning), perubahan yang dapat dilakukan antara lain: \n1. Perubahan jadwal pembayaran \n2. Perubahan jumlah angsuran \n3. Perubahan jangka waktu \n4. Perubahan nisbah dalam Pembiayaan Mudharabah atau Pembiayaan Musyarakah \n5. Perubahan PBH dalam Pembiayaan Mudharabah atau Pembiayaan Musyarakah \n 6. Pemberian potongan",
+    "Penataan kembali (restructuring) adalah perubahan persyaratan pembiayaan yang antara lain meliputi: \n1. Penambahan dana fasilitas pembiayaan Bank \n2. Konversi akad pembiayaan \n3. Konversi pembiayaan menjadi penyertaan modal sementara pada perusahaan nasabah",
+    "Sebelum menyediakan jasa Cross Border Correspondent Banking, Bank harus melakukan proses CDD terhadap calon bank responden baik yang bertindak sebagai Bank Penerus maupun sebagai Bank Penerima.",
+    "Informasi yang harus diminta antara lain:\na. Profil calon Bank Penerima dan/atau Bank Penerus, termasuk susunan anggota Direksi dan Dewan Komisaris, kegiatan usaha, produk perbankan yang dimiliki, target pemasaran, dan tujuan pembukaan rekening. \nb. Reputasi Bank Penerima dan/atau Bank Penerus berdasarkan informasi yang dapat dipertanggungjawabkan, termasuk reputasi negatif seperti sanksi yang pernah dikenakan oleh otoritas atau proses penyidikan terkait dengan pencegahan dan pemberantasan tindak pidana Pencucian Uang dan/atau Pendanaan Terorisme."
 ]
