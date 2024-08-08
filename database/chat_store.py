@@ -141,7 +141,7 @@ class CustomElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
             }
             results = self.client.search(index=self.index, body=query, size=1)
             if results['hits']['total']['value'] == 0:
-                title = message_to_dict(message)['data']['content'][:25] + "..." if len(message_to_dict(message)['data']['content']) > 25 else message_to_dict(message)['data']['content'] + "..."
+                title = message_to_dict(message)['data']['content'][:25] if len(message_to_dict(message)['data']['content']) > 25 else message_to_dict(message)['data']['content']
             else:
                 title = results['hits']['hits'][0]['_source']['title']
 
