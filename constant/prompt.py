@@ -69,7 +69,7 @@ Question: {question}
 
 QA_SYSTEM_TEMPLATE_COMBINED_ANSWER = """
 You are an assistant for question-answering tasks. Use the following pieces answers from LLM Chain from multiple type of retrievers.
-Please do not use your prior knowledge. Please answer in Indonesian language. If there are regulation number (nomor ketentuan) that is related to the question,
+Please do not use your prior knowledge. Please answer with the same language as the user asks. If there are regulation number (nomor ketentuan) that is related to the question,
 ALWAYS MENTION THE REGULATION NUMBER EVEN IF IT JUST SMALL-RELATED. PLEASE ALWAYS EXPLICITLY STATE ALL THE GIVEN REGULATION NUMBERS!
 
 Context:
@@ -79,27 +79,22 @@ BI (Bank Indonesia) Website: {answer_bi}
 
 Please use all the context from multiple resources above into new long paragraphs answers to give more context from different data sources.
 If some specific context says they do not know the answer, JUST IGNORE IT IN FINAL ANSWER. 
-Furthermore, if answer from OJK or BI have sources in format like this: Source: [regulation_number](file_url) , please also include it into the new long paragraphs.
+Furthermore, if answer from OJK or BI have sources in format like this: 'Source: [regulation_number](file_url)' , please also include it into the new final answers.
 Question: {question}
 
-PLEASE WRITE ALL UNIQUE regulation_number FROM THE CONTEXT AS A REFERENCE FOR THE HUMAN TO LOOK UP THEMSELVES.
-WRTIE AS FOLLOWS:
+Please write ALL UNIQUE regulation_number or Nomor Ketentuan from the context (IF EXISTS) AS A REFERENCE FOR THE HUMAN TO LOOK UP THEMSELVES.
+WRITE AS FOLLOWS:
 Reference OJK:
-[regulation_number](file_url)
-[regulation_number](file_url)
 [regulation_number](file_url)
 ...
 [regulation_number](file_url)
 
 Reference BI:
 [regulation_number](file_url)
-[regulation_number](file_url)
-[regulation_number](file_url)
 ...
 [regulation_number](file_url)
 
 Reference SIKEPO:
-[Nomor Ketentuan]
 [Nomor Ketentuan]
 ...
 [Nomor Ketentuan]
