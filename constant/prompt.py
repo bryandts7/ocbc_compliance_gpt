@@ -78,8 +78,8 @@ OJK (Otoritas Jasa Keuangan) Website: {answer_ojk}
 BI (Bank Indonesia) Website: {answer_bi}
 
 Please use all the context from multiple resources above into new long paragraphs answers to give more context from different data sources.
-If some specific context says they do not know the answer like "Saya tidak tahu", JUST IGNORE IT AND YOU DO NOT NEED TO INCLUDE THAT AND DON'T MENTION ANYTHING REGARDING THAT CONTEXT IN FINAL ANSWER. 
-Furthermore, if answer from OJK or BI have sources in format like this: Source: [regulation_number](file_url), please also include it into the new long paragraphs.
+If some specific context says they do not know the answer, JUST IGNORE IT IN FINAL ANSWER. 
+Furthermore, if answer from OJK or BI have sources in format like this: Source: [regulation_number](file_url) , please also include it into the new long paragraphs.
 Question: {question}
 
 PLEASE WRITE ALL UNIQUE regulation_number FROM THE CONTEXT AS A REFERENCE FOR THE HUMAN TO LOOK UP THEMSELVES.

@@ -32,6 +32,9 @@ def merge_context(results):
         results["context_bi"] + results["context_sikepo"]
     return merged
 
+def merge_answer(results):
+    merged = [results["answer_ojk"], results["answer_bi"], results["answer_sikepo"]]
+    return merged
 
 def routing_ketentuan_chain(chain, llm_model):
     question_router = ketentuan_router_chain(
@@ -170,6 +173,7 @@ def create_combined_answer_chain(retriever_ojk: BaseRetriever, retriever_sikepo_
     } | {
         "rewrited question":   itemgetter("question"),
         "context":   RunnableLambda(merge_context),
+        "context_text": RunnableLambda(merge_answer),
         "answer":   QA_SYSTEM_PROMPT | llm_model | StrOutputParser()
     }
 

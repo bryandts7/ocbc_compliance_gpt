@@ -73,6 +73,8 @@ retriever_sikepo_ket_wo_self = lotr_sikepo(vector_store=vector_store_ket, top_k=
                                    llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
 retriever_sikepo_rek = lotr_sikepo(vector_store=vector_store_rek, top_k=top_k,
                                    llm_model=llm_model, embed_model=embed_model, config=config)
+retriever_sikepo_rek_wo_self = lotr_sikepo(vector_store=vector_store_rek, top_k=top_k,
+                                   llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
 
 graph_chain = graph_rag_chain(llm_model, llm_model, graph=graph)
 chain = create_combined_answer_chain(
@@ -89,7 +91,7 @@ chain_wo_self = create_combined_answer_chain(
     retriever_ojk=retriever_ojk_wo_self,
     retriever_bi=retriever_bi,
     retriever_sikepo_ketentuan=retriever_sikepo_ket_wo_self,
-    retriever_sikepo_rekam=retriever_sikepo_rek,
+    retriever_sikepo_rekam=retriever_sikepo_rek_wo_self,
 )
 
 chain_history = create_chain_with_chat_history(
@@ -129,7 +131,7 @@ class ModelRequest(BaseModel):
 
 @app.post("/initialize_model/")
 async def initialize_model(request: ModelRequest):
-    global llm_model, embed_model, retriever_ojk, retriever_ojk_wo_self, retriever_bi, retriever_sikepo_ket, retriever_sikepo_ket_wo_self, retriever_sikepo_rek, chain, chain_wo_self, chain_history, chain_history_wo_self, top_k
+    global llm_model, embed_model, retriever_ojk, retriever_ojk_wo_self, retriever_bi, retriever_sikepo_ket, retriever_sikepo_ket_wo_self, retriever_sikepo_rek, retriever_sikepo_rek_wo_self, chain, chain_wo_self, chain_history, chain_history_wo_self, top_k
 
     model = request.model
     print(f"Received model: {model}")
@@ -158,6 +160,8 @@ async def initialize_model(request: ModelRequest):
                                     llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
     retriever_sikepo_rek = lotr_sikepo(vector_store=vector_store_rek, top_k=top_k,
                                     llm_model=llm_model, embed_model=embed_model, config=config)
+    retriever_sikepo_rek_wo_self = lotr_sikepo(vector_store=vector_store_rek, top_k=top_k,
+                                   llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
 
     # Reinitialize the chain with the new retrievers
     graph_chain = graph_rag_chain(llm_model, llm_model, graph=graph)
@@ -175,7 +179,7 @@ async def initialize_model(request: ModelRequest):
         retriever_ojk=retriever_ojk_wo_self,
         retriever_bi=retriever_bi,
         retriever_sikepo_ketentuan=retriever_sikepo_ket_wo_self,
-        retriever_sikepo_rekam=retriever_sikepo_rek,
+        retriever_sikepo_rekam=retriever_sikepo_rek_wo_self ,
     )
 
     chain_history = create_chain_with_chat_history(
