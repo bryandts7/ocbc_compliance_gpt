@@ -1,4 +1,4 @@
-from typing import List, Tuple, Optional
+from typing import List, Optional
 import logging
 import json
 from time import time
@@ -105,7 +105,7 @@ class CustomElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
 
         # Retrieve only the last k pairs of messages in the original order
         all_messages = messages_from_dict(items)
-        
+
         # Take the last k Human messages
         last_k_human_ai_messages = all_messages[:self.k]
         last_k_human_ai_messages.reverse()
@@ -118,7 +118,8 @@ class CustomElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
 
             # check if the index exists
             if not self.client.indices.exists(index=self.index):
-                logger.debug(f"Creating index {self.index} for storing chat history.")
+                logger.debug(
+                    f"Creating index {self.index} for storing chat history.")
                 self.client.indices.create(
                     index=self.index,
                     mappings={
@@ -141,7 +142,8 @@ class CustomElasticsearchChatMessageHistory(ElasticsearchChatMessageHistory):
             }
             results = self.client.search(index=self.index, body=query, size=1)
             if results['hits']['total']['value'] == 0:
-                title = message_to_dict(message)['data']['content'][:25] if len(message_to_dict(message)['data']['content']) > 25 else message_to_dict(message)['data']['content']
+                title = message_to_dict(message)['data']['content'][:50] if len(message_to_dict(
+                    message)['data']['content']) > 50 else message_to_dict(message)['data']['content']
             else:
                 title = results['hits']['hits'][0]['_source']['title']
 
@@ -206,21 +208,22 @@ class ElasticChatStore:
         results = self.es_client.search(
             index=self.index_name, body=query, size=10000
         )
-        
-
-        #  return unique conversation ids and their titles, keep the first one
-        formatted_result = []
-        conversation_ids = set()
+        conversation_map = {}
         for hit in results['hits']['hits']:
             session_id = hit['_source']['session_id']
             conversation_id = session_id.split(":")[1]
-            if conversation_id not in conversation_ids:
-                conversation_ids.add(conversation_id)
-                formatted_result.append({
+            if conversation_id not in conversation_map:
+                conversation_map[conversation_id] = {
                     "id": conversation_id,
-                    "title": hit['_source']['title']
-                })
-
+                    "title": hit['_source']['title'],
+                    "date": hit['_source']['created_at']
+                }
+            else:
+                # Update the date if the current one is more recent
+                if hit['_source']['created_at'] > conversation_map[conversation_id]['date']:
+                    conversation_map[conversation_id]['date'] = hit['_source']['created_at']
+        # Convert the dictionary values to a list
+        formatted_result = list(conversation_map.values())
         return formatted_result
 
     def get_conversation(self, user_id: str, conversation_id: str) -> List[dict]:
@@ -243,7 +246,8 @@ class ElasticChatStore:
             message_dict = json.loads(message_str)
             parsed_message = {
                 "isUser": message_dict["type"] == "human",
-                "content": message_dict["data"]["content"]
+                "content": message_dict["data"]["content"],
+                "date": hit['_source']['created_at']
             }
             messages.append(parsed_message)
         return messages
@@ -253,7 +257,8 @@ class ElasticChatStore:
         session_id = f"{user_id}:{conversation_id}"
         query = {"query": {"prefix": {"session_id": session_id}}}
         try:
-            response = self.es_client.delete_by_query(index=self.index_name, body=query)
+            response = self.es_client.delete_by_query(
+                index=self.index_name, body=query)
             return response.get('deleted', 0) > 0
         except Exception as e:
             return False
@@ -272,7 +277,7 @@ class ElasticChatStore:
 
     def rename_title(self, user_id: str, conversation_id: str, new_title: str) -> bool:
         session_id = f"{user_id}:{conversation_id}"
-    
+
         query = {
             "query": {
                 "term": {
@@ -280,8 +285,9 @@ class ElasticChatStore:
                 }
             }
         }
-        
-        results = self.es_client.search(index=self.index_name, body=query, size=10000)
+
+        results = self.es_client.search(
+            index=self.index_name, body=query, size=10000)
 
         if results['hits']['total']['value'] == 0:
             return False
@@ -293,15 +299,17 @@ class ElasticChatStore:
                     "title": new_title
                 }
             }
-            self.es_client.update(index=self.index_name, id=doc_id, body=update_body)
-        
+            self.es_client.update(index=self.index_name,
+                                  id=doc_id, body=update_body)
+
         return True
 
     def clear_conversation_by_userid(self, user_id: str) -> bool:
         """Clear all conversations for a given user."""
         query = {"query": {"prefix": {"session_id": f"{user_id}:"}}}
         try:
-            response = self.es_client.delete_by_query(index=self.index_name, body=query, refresh=True)
+            response = self.es_client.delete_by_query(
+                index=self.index_name, body=query, refresh=True)
             return response.get('deleted', 0) > 0
         except Exception as e:
             logger.error(f"Error deleting all chats for user {user_id}: {e}")

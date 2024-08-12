@@ -64,17 +64,17 @@ chat_store = ElasticChatStore(k=4, config=config)
 retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_k=top_k,
                                   llm_model=llm_model, embed_model=embed_model, config=config)
 retriever_ojk_wo_self = get_retriever_ojk(vector_store=vector_store_ojk, top_k=top_k,
-                                  llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
+                                          llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
 retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_k=top_k,
                                 llm_model=llm_model, embed_model=embed_model, config=config)
 retriever_sikepo_ket = lotr_sikepo(vector_store=vector_store_ket, top_k=top_k,
                                    llm_model=llm_model, embed_model=embed_model, config=config)
 retriever_sikepo_ket_wo_self = lotr_sikepo(vector_store=vector_store_ket, top_k=top_k,
-                                   llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
+                                           llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
 retriever_sikepo_rek = lotr_sikepo(vector_store=vector_store_rek, top_k=top_k,
                                    llm_model=llm_model, embed_model=embed_model, config=config)
 retriever_sikepo_rek_wo_self = lotr_sikepo(vector_store=vector_store_rek, top_k=top_k,
-                                   llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
+                                           llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
 
 graph_chain = graph_rag_chain(llm_model, llm_model, graph=graph)
 chain = create_combined_answer_chain(
@@ -149,19 +149,19 @@ async def initialize_model(request: ModelRequest):
 
     # Reinitialize retrievers with the new model and top_k
     retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_k=top_k,
-                                  llm_model=llm_model, embed_model=embed_model, config=config)
+                                      llm_model=llm_model, embed_model=embed_model, config=config)
     retriever_ojk_wo_self = get_retriever_ojk(vector_store=vector_store_ojk, top_k=top_k,
-                                    llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
+                                              llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
     retriever_bi = get_retriever_bi(vector_store=vector_store_bi, top_k=top_k,
                                     llm_model=llm_model, embed_model=embed_model, config=config)
     retriever_sikepo_ket = lotr_sikepo(vector_store=vector_store_ket, top_k=top_k,
-                                    llm_model=llm_model, embed_model=embed_model, config=config)
+                                       llm_model=llm_model, embed_model=embed_model, config=config)
     retriever_sikepo_ket_wo_self = lotr_sikepo(vector_store=vector_store_ket, top_k=top_k,
-                                    llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
+                                               llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
     retriever_sikepo_rek = lotr_sikepo(vector_store=vector_store_rek, top_k=top_k,
-                                    llm_model=llm_model, embed_model=embed_model, config=config)
+                                       llm_model=llm_model, embed_model=embed_model, config=config)
     retriever_sikepo_rek_wo_self = lotr_sikepo(vector_store=vector_store_rek, top_k=top_k,
-                                   llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
+                                               llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
 
     # Reinitialize the chain with the new retrievers
     graph_chain = graph_rag_chain(llm_model, llm_model, graph=graph)
@@ -179,7 +179,7 @@ async def initialize_model(request: ModelRequest):
         retriever_ojk=retriever_ojk_wo_self,
         retriever_bi=retriever_bi,
         retriever_sikepo_ketentuan=retriever_sikepo_ket_wo_self,
-        retriever_sikepo_rekam=retriever_sikepo_rek_wo_self ,
+        retriever_sikepo_rekam=retriever_sikepo_rek_wo_self,
     )
 
     chain_history = create_chain_with_chat_history(
@@ -207,36 +207,42 @@ async def chat_endpoint(message: str, conv_id: str, credentials: HTTPAuthorizati
     # Get the user ID from the Authorization header
     user_id = credentials.credentials
     try:
-        response =  StreamingResponse(print_answer_stream(message, chain=chain_history, user_id=user_id, conversation_id=conv_id), media_type="text/event-stream")
+        response = StreamingResponse(print_answer_stream(
+            message, chain=chain_history, user_id=user_id, conversation_id=conv_id), media_type="text/event-stream")
         return response
     except:
-        response =  StreamingResponse(print_answer_stream(message, chain=chain_history_wo_self, user_id=user_id, conversation_id=conv_id), media_type="text/event-stream") 
+        response = StreamingResponse(print_answer_stream(
+            message, chain=chain_history_wo_self, user_id=user_id, conversation_id=conv_id), media_type="text/event-stream")
         return response
+
 
 @app.get("/fetch_conversations/")
 async def fetch_conv(credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Get the user ID from the Authorization header
-
     user_id = credentials.credentials
-    session_ids_with_title = chat_store.get_conversation_ids_by_user_id(user_id)
+    session_ids_with_title = chat_store.get_conversation_ids_by_user_id(
+        user_id)
     return JSONResponse(
         status_code=200,
         content=session_ids_with_title
     )
 
+
 @app.get("/fetch_messages/{conversation_id}")
 async def fetch_message(conversation_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Get the user ID from the Authorization header
     user_id = credentials.credentials
-    messages = chat_store.get_conversation(user_id=user_id, conversation_id=conversation_id)
+    messages = chat_store.get_conversation(
+        user_id=user_id, conversation_id=conversation_id)
     return JSONResponse(
         status_code=200,
         content=messages
     )
 
+
 @app.put("/rename_conversation/{conversation_id}")
 async def rename_conversation(
-    conversation_id: str, 
+    conversation_id: str,
     new_title: str = Query(..., description="New title for the conversation"),
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -246,7 +252,8 @@ async def rename_conversation(
         return JSONResponse(status_code=200, content={"message": "Conversation renamed successfully"})
     else:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    
+
+
 @app.delete("/delete_conversation/{conversation_id}")
 async def delete_conversation(conversation_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_id = credentials.credentials
@@ -255,7 +262,8 @@ async def delete_conversation(conversation_id: str, credentials: HTTPAuthorizati
         return JSONResponse(status_code=200, content={"message": "Conversation deleted successfully"})
     else:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    
+
+
 @app.delete("/delete_all_conversations/")
 async def delete_all_user_chats(credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_id = credentials.credentials
@@ -263,7 +271,8 @@ async def delete_all_user_chats(credentials: HTTPAuthorizationCredentials = Depe
     if success:
         return JSONResponse(status_code=200, content={"message": "All conversations deleted successfully"})
     else:
-        raise HTTPException(status_code=404, detail="No conversations found for the user")
+        raise HTTPException(
+            status_code=404, detail="No conversations found for the user")
 
 if __name__ == "__main__":
     import uvicorn
