@@ -11,7 +11,6 @@ ragas==0.1.10
 retry==0.9.2
 lark==1.1.9
 langchain-pinecone==0.1.1
-pg_config
 psycopg2==2.9.9
 langchain_postgres==0.0.9
 langchain_elasticsearch==0.2.2
