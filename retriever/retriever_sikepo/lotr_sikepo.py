@@ -8,20 +8,14 @@ from langchain.retrievers import (
 from langchain_community.document_transformers import (
     EmbeddingsRedundantFilter, EmbeddingsClusteringFilter
 )
-from langchain.retrievers.document_compressors.flashrank_rerank import FlashrankRerank
-from langchain_community.document_compressors.rankllm_rerank import RankLLMRerank
+# from langchain.retrievers.document_compressors.flashrank_rerank import FlashrankRerank
+# from langchain_community.document_compressors.rankllm_rerank import RankLLMRerank
 from langchain.retrievers.document_compressors.base import DocumentCompressorPipeline
-from langchain.chains.query_constructor.base import AttributeInfo
-from langchain.retrievers.self_query.base import SelfQueryRetriever
 from langchain_core.vectorstores import VectorStore
 from langchain_core.language_models.base import BaseLanguageModel
 from langchain_core.embeddings import Embeddings
 
 from retriever.retriever_sikepo.self_query_sikepo import self_query_retriever_sikepo
-
-# ini panggil sesuai vector store saja, jadi gak perlu defin 2 kali
-# misal : lotr_ketentuan_terkait = lotr_siekepo(vector_store=vector_store_ketentuan_terkait, ...)
-# untuk chain di folder terpisah soalnya responsibility nya beda
 
 
 def lotr_sikepo(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, config: dict = {}, top_k: int = 8, with_self_query: bool = True):
@@ -30,7 +24,6 @@ def lotr_sikepo(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_m
     retriever_similarity = vector_store.as_retriever(search_type="similarity", search_kwargs={'k': top_k})
     self_query_retriever = self_query_retriever_sikepo(
         llm_model=llm_model, vector_store=vector_store)
-    # bm25_retriever = bm25_retriever_sikepo() # ini fungsinya belom di define yee, jadi gak bisa dipanggil, define di `retriver/retriever_sikepo/bm25_retriever_sikepo.py
 
     lotr = MergerRetriever(retrievers=[retriever_similarity, retriever_mmr])
     # merge retrievers

@@ -3,10 +3,9 @@ from langchain.retrievers import (ContextualCompressionRetriever,
 from langchain.retrievers.document_compressors.base import \
     DocumentCompressorPipeline
 from langchain_cohere import CohereRerank
-from langchain.retrievers.document_compressors.flashrank_rerank import FlashrankRerank
-from langchain_community.document_compressors.rankllm_rerank import RankLLMRerank
+# from langchain.retrievers.document_compressors.flashrank_rerank import FlashrankRerank
+# from langchain_community.document_compressors.rankllm_rerank import RankLLMRerank
 from langchain_community.document_transformers import EmbeddingsRedundantFilter
-from langchain_community.retrievers import BM25Retriever
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.base import BaseLanguageModel
 from langchain_core.vectorstores import VectorStore
