@@ -9,6 +9,9 @@ from langchain_community.document_transformers import EmbeddingsRedundantFilter
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.base import BaseLanguageModel
 from langchain_core.vectorstores import VectorStore
+from langchain_core.runnables import RunnableLambda
+from retriever.retriever_sikepo.lotr_sikepo import to_documents
+
 
 # all_documents_file = gzip.open(f'retriever/retriever_bi/all_documents.pkl.gz','rb')
 # all_documents = pickle.load(all_documents_file)
@@ -29,12 +32,13 @@ def get_retriever_bi(vector_store: VectorStore, llm_model: BaseLanguageModel, em
     lotr = MergerRetriever(retrievers=[retriever_similarity, retriever_mmr])
 
     # remove redundant documents
-    # filter = EmbeddingsRedundantFilter(embeddings=embed_model)
-    # pipeline = DocumentCompressorPipeline(transformers=[filter])
-    # compression_retriever = ContextualCompressionRetriever(
-    #     base_compressor=pipeline, base_retriever=lotr
-    # )
+    filter = EmbeddingsRedundantFilter(embeddings=embed_model)
+    pipeline = DocumentCompressorPipeline(transformers=[filter])
+    compression_retriever = ContextualCompressionRetriever(
+        base_compressor=pipeline, base_retriever=lotr
+    )
 
+    chain = compression_retriever | RunnableLambda(to_documents)
     # rerank with Cohere
     # compressor = CohereRerank(
     #     cohere_api_key=config['cohere_api_key'], top_n=top_n, model="rerank-multilingual-v3.0")
@@ -46,4 +50,4 @@ def get_retriever_bi(vector_store: VectorStore, llm_model: BaseLanguageModel, em
     #     base_compressor=compressor, base_retriever=compression_retriever
     # )
 
-    return lotr
+    return chain

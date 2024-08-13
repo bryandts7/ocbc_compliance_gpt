@@ -5,6 +5,7 @@ from langchain.retrievers import (
     ContextualCompressionRetriever,
     MergerRetriever,
 )
+from langchain_core.runnables import RunnableLambda
 from langchain_community.document_transformers import (
     EmbeddingsRedundantFilter, EmbeddingsClusteringFilter
 )
@@ -14,9 +15,14 @@ from langchain.retrievers.document_compressors.base import DocumentCompressorPip
 from langchain_core.vectorstores import VectorStore
 from langchain_core.language_models.base import BaseLanguageModel
 from langchain_core.embeddings import Embeddings
+from langchain_community.document_transformers.embeddings_redundant_filter import _DocumentWithState
+from langchain_core.runnables import RunnableLambda
 
 from retriever.retriever_sikepo.self_query_sikepo import self_query_retriever_sikepo
 
+def to_documents(context: list[_DocumentWithState]):
+    context_unique = [i.to_document() for i in context]
+    return context_unique
 
 def lotr_sikepo(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, config: dict = {}, top_k: int = 8, with_self_query: bool = True):
 
@@ -32,11 +38,13 @@ def lotr_sikepo(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_m
 
 
     # remove redundant documents
-    # filter = EmbeddingsRedundantFilter(embeddings=embed_model)
-    # pipeline = DocumentCompressorPipeline(transformers=[filter])
-    # compression_retriever = ContextualCompressionRetriever(
-    #     base_compressor=pipeline, base_retriever=lotr
-    # )
+    filter = EmbeddingsRedundantFilter(embeddings=embed_model)
+    pipeline = DocumentCompressorPipeline(transformers=[filter])
+    compression_retriever = ContextualCompressionRetriever(
+        base_compressor=pipeline, base_retriever=lotr
+    )
+
+    chain = compression_retriever | RunnableLambda(to_documents)
 
     # rerank with Cohere
     # compressor = CohereRerank(
@@ -48,4 +56,4 @@ def lotr_sikepo(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_m
     #     base_compressor=compressor, base_retriever=compression_retriever
     # )
 
-    return lotr
+    return chain

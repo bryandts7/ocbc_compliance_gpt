@@ -13,9 +13,10 @@ from langchain.retrievers.document_compressors.base import DocumentCompressorPip
 from langchain_core.vectorstores import VectorStore
 from langchain_core.language_models.base import BaseLanguageModel
 from langchain_core.embeddings import Embeddings
+from langchain_core.runnables import RunnableLambda
 
 from retriever.retriever_ojk.self_query_ojk import self_query_ojk
-
+from retriever.retriever_sikepo.lotr_sikepo import to_documents
 
 def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, top_k: int = 8, config: dict = {}, with_self_query: bool = True):
 
@@ -44,14 +45,15 @@ def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, e
     # merge retrievers
     if with_self_query:
         lotr = MergerRetriever(retrievers=[retriever_self_query_mmr, retriever_similarity, retriever_mmr])
-    # lotr = MergerRetriever(retrievers=[retriever_similarity, retriever_mmr])
 
     # remove redundant documents
-    # filter = EmbeddingsRedundantFilter(embeddings=embed_model)
-    # pipeline = DocumentCompressorPipeline(transformers=[filter])
-    # compression_retriever = ContextualCompressionRetriever(
-    #     base_compressor=pipeline, base_retriever=lotr
-    # )
+    filter = EmbeddingsRedundantFilter(embeddings=embed_model)
+    pipeline = DocumentCompressorPipeline(transformers=[filter])
+    compression_retriever = ContextualCompressionRetriever(
+        base_compressor=pipeline, base_retriever=lotr
+    )
+
+    chain = compression_retriever | RunnableLambda(to_documents)
 
     # rerank with Cohere
     # compressor = CohereRerank(
@@ -63,4 +65,4 @@ def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, e
     #     base_compressor=compressor, base_retriever=compression_retriever
     # )
 
-    return lotr
+    return chain
