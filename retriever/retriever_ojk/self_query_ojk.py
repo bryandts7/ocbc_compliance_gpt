@@ -12,26 +12,6 @@ from retriever.self_query import self_query
 # Define metadata field information
 metadata_field_info = [
     AttributeInfo(
-        name="title",
-        description="The title of the document of regulation",
-        type="string",
-    ),
-    AttributeInfo(
-        name="sector",
-        description="""The sector of the regulation""",
-        type="string",
-    ),
-    AttributeInfo(
-        name="subsector",
-        description="The subsector of the regulation",
-        type="string",
-    ),
-    AttributeInfo(
-        name="regulation_type",
-        description="""The type of the regulation""",
-        type="string",
-    ),
-    AttributeInfo(
         name="regulation_number",
         description="The number of the regulation (nomor ketentuan, nomor regulasi, nomor peraturan)",
         type="string",

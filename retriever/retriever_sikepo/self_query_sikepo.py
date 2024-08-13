@@ -8,33 +8,13 @@ from retriever.self_query import self_query
 
 metadata_field_info = [
     AttributeInfo(
-        name="Jenis Ketentuan",
-        description="Jenis peraturan atau ketentuan",
-        type="string",
-    ),
-    AttributeInfo(
-        name="Judul Ketentuan",
-        description="Judul peraturan atau ketentuan",
-        type="string",
-    ),
-    AttributeInfo(
         name="Ketentuan",
-        description="Pasal atau ketentuan spesifik dalam peraturan",
-        type="string",
-    ),
-    AttributeInfo(
-        name="Kodifikasi Ketentuan",
-        description="Kategori kodifikasi ketentuan",
+        description="Pasal spesifik dalam peraturan (Specific Chapter/Article in the regulation)",
         type="string",
     ),
     AttributeInfo(
         name="Nomor Ketentuan",
-        description="Nomor dari ketentuan",
-        type="string",
-    ),
-    AttributeInfo(
-        name="Referensi",
-        description="Referensi terkait ketentuan",
+        description="Nomor dari ketentuan (Number of regulation)",
         type="string",
     ),
     AttributeInfo(
