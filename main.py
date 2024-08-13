@@ -129,7 +129,7 @@ class ModelRequest(BaseModel):
     model: str
 
 
-@app.post("/initialize_model/")
+@app.post("/api/initialize_model/")
 async def initialize_model(request: ModelRequest):
     global llm_model, embed_model, retriever_ojk, retriever_ojk_wo_self, retriever_bi, retriever_sikepo_ket, retriever_sikepo_ket_wo_self, retriever_sikepo_rek, retriever_sikepo_rek_wo_self, chain, chain_wo_self, chain_history, chain_history_wo_self, top_k
 
@@ -202,7 +202,7 @@ async def initialize_model(request: ModelRequest):
     )
 
 
-@app.get("/chat")
+@app.get("/api/chat")
 async def chat_endpoint(message: str, conv_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Get the user ID from the Authorization header
     user_id = credentials.credentials
@@ -216,7 +216,7 @@ async def chat_endpoint(message: str, conv_id: str, credentials: HTTPAuthorizati
         return response
 
 
-@app.get("/fetch_conversations/")
+@app.get("/api/fetch_conversations/")
 async def fetch_conv(credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Get the user ID from the Authorization header
     user_id = credentials.credentials
@@ -228,7 +228,7 @@ async def fetch_conv(credentials: HTTPAuthorizationCredentials = Depends(securit
     )
 
 
-@app.get("/fetch_messages/{conversation_id}")
+@app.get("/api/fetch_messages/{conversation_id}")
 async def fetch_message(conversation_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Get the user ID from the Authorization header
     user_id = credentials.credentials
@@ -240,7 +240,7 @@ async def fetch_message(conversation_id: str, credentials: HTTPAuthorizationCred
     )
 
 
-@app.put("/rename_conversation/{conversation_id}")
+@app.put("/api/rename_conversation/{conversation_id}")
 async def rename_conversation(
     conversation_id: str,
     new_title: str = Query(..., description="New title for the conversation"),
@@ -254,7 +254,7 @@ async def rename_conversation(
         raise HTTPException(status_code=404, detail="Conversation not found")
 
 
-@app.delete("/delete_conversation/{conversation_id}")
+@app.delete("/api/delete_conversation/{conversation_id}")
 async def delete_conversation(conversation_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_id = credentials.credentials
     success = chat_store.clear_session_history(user_id, conversation_id)
@@ -264,7 +264,7 @@ async def delete_conversation(conversation_id: str, credentials: HTTPAuthorizati
         raise HTTPException(status_code=404, detail="Conversation not found")
 
 
-@app.delete("/delete_all_conversations/")
+@app.delete("/api/delete_all_conversations/")
 async def delete_all_user_chats(credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_id = credentials.credentials
     success = chat_store.clear_conversation_by_userid(user_id)
