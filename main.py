@@ -1,45 +1,41 @@
+import nest_asyncio
+import warnings
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-import asyncio
+from fastapi import Query
+
 from pydantic import BaseModel
+
 from utils.config import get_config
 from utils.models import ModelName, LLMModelName, EmbeddingModelName, get_model
-from database.vector_store.vector_store import ElasticIndexManager, RedisIndexManager
+
+from database.vector_store.vector_store import ElasticIndexManager
 from database.vector_store.neo4j_graph_store import Neo4jGraphStore
+
 from retriever.retriever_ojk.retriever_ojk import get_retriever_ojk
 from retriever.retriever_bi.retriever_bi import get_retriever_bi
 from retriever.retriever_sikepo.lotr_sikepo import lotr_sikepo
 from database.chat_store import ElasticChatStore
+
 from chain.rag_chain import create_combined_answer_chain, create_chain_with_chat_history, print_answer_stream
 from chain.chain_sikepo.graph_cypher_sikepo_chain import graph_rag_chain
-from chain.rag_chain import get_response
-from typing import AsyncGenerator
-import time
-from typing import Union
-from fastapi import Query
 
-import nest_asyncio
-import warnings
 
 nest_asyncio.apply()
 warnings.filterwarnings("ignore")
 
 # =========== CONFIG ===========
 security = HTTPBearer()
-
 config = get_config()
 
-# =========== GLOBAL VARIABLES ===========
+# =========== MODEL ===========
 llm_model, embed_model = get_model(model_name=ModelName.AZURE_OPENAI, config=config,
                                    llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
 top_k = 8
 
-# index_ojk = RedisIndexManager(index_name='ojk', embed_model=embed_model, config=config, db_id=0)
-# index_bi = RedisIndexManager(index_name='bi', embed_model=embed_model, config=config, db_id=0)
-# index_sikepo_ket = RedisIndexManager(index_name='sikepo-ketentuan-terkait', embed_model=embed_model, config=config, db_id=0)
-# index_sikepo_rek = RedisIndexManager(index_name='sikepo-rekam-jejak', embed_model=embed_model, config=config, db_id=0)
+# =========== DATABASE ===========
 index_ojk = ElasticIndexManager(
     index_name='ojk', embed_model=embed_model, config=config)
 index_bi = ElasticIndexManager(
@@ -57,10 +53,10 @@ vector_store_rek = index_sikepo_rek.load_vector_index()
 neo4j_sikepo = Neo4jGraphStore(config=config)
 graph = neo4j_sikepo.get_graph()
 
-# chat_store = RedisChatStore(k=3, config=config)
 chat_store = ElasticChatStore(k=4, config=config)
 
-# Initialize retrievers and chains with default model
+
+# =========== RETRIEVER ===========
 retriever_ojk = get_retriever_ojk(vector_store=vector_store_ojk, top_k=top_k,
                                   llm_model=llm_model, embed_model=embed_model, config=config)
 retriever_ojk_wo_self = get_retriever_ojk(vector_store=vector_store_ojk, top_k=top_k,
@@ -76,6 +72,8 @@ retriever_sikepo_rek = lotr_sikepo(vector_store=vector_store_rek, top_k=top_k,
 retriever_sikepo_rek_wo_self = lotr_sikepo(vector_store=vector_store_rek, top_k=top_k,
                                            llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
 
+
+# =========== CHAIN ===========
 graph_chain = graph_rag_chain(llm_model, llm_model, graph=graph)
 chain = create_combined_answer_chain(
     llm_model=llm_model,
@@ -94,15 +92,17 @@ chain_wo_self = create_combined_answer_chain(
     retriever_sikepo_rekam=retriever_sikepo_rek_wo_self,
 )
 
+
+# =========== CHAIN HISTORY ===========
 chain_history = create_chain_with_chat_history(
     final_chain=chain,
     chat_store=chat_store,
 )
-
 chain_history_wo_self = create_chain_with_chat_history(
     final_chain=chain_wo_self,
     chat_store=chat_store,
 )
+
 
 # =========== FASTAPI APP ===========
 app = FastAPI()
@@ -116,6 +116,7 @@ app.add_middleware(
 )
 
 
+# =========== INTERFACE ===========
 class ChatRequest(BaseModel):
     user_input: str
 
@@ -129,6 +130,7 @@ class ModelRequest(BaseModel):
     model: str
 
 
+# =========== ENDPOINT ===========
 @app.post("/api/initialize_model/")
 async def initialize_model(request: ModelRequest):
     global llm_model, embed_model, retriever_ojk, retriever_ojk_wo_self, retriever_bi, retriever_sikepo_ket, retriever_sikepo_ket_wo_self, retriever_sikepo_rek, retriever_sikepo_rek_wo_self, chain, chain_wo_self, chain_history, chain_history_wo_self, top_k
@@ -274,6 +276,8 @@ async def delete_all_user_chats(credentials: HTTPAuthorizationCredentials = Depe
         raise HTTPException(
             status_code=404, detail="No conversations found for the user")
 
+
+# =========== MAIN ===========
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=9898)

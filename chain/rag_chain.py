@@ -4,7 +4,7 @@ from langchain_core.runnables import ConfigurableFieldSpec, RunnablePassthrough,
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from utils.models import ModelName
-from typing import Union
+import json
 from langchain_core.runnables.base import Runnable
 from langchain.chains.graph_qa.cypher import GraphCypherQAChain
 from langchain_core.output_parsers import StrOutputParser
@@ -279,5 +279,14 @@ def get_response(question: str, chain, user_id: str, conversation_id: str):
 async def print_answer_stream(question: str, chain, user_id: str, conversation_id: str):
     async for chunk in chain.astream({"question": question}, config={"configurable": {"user_id": user_id, "conversation_id": conversation_id}}):
         if 'answer' in chunk:
-            yield f"data: {chunk['answer']}\n\n"
-            # print(chunk['answer'], end='', flush=True)
+            # yield f"data: {chunk['answer'] or ''}\n\n"
+            json_chunk = json.dumps({"answer": chunk['answer'] or ''})
+            yield f"data: {json_chunk}\n\n"
+            # yield f"data: {json_chunk}\n\n"
+            
+
+
+async def print_answer_stream2(question: str, chain, user_id: str, conversation_id: str):
+    async for chunk in chain.astream({"question": question}, config={"configurable": {"user_id": user_id, "conversation_id": conversation_id}}):
+        if 'answer' in chunk:
+            print(chunk['answer'], end='', flush=True)
