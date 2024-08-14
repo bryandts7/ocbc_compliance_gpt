@@ -216,15 +216,24 @@ async def chat_endpoint(message: str, conv_id: str, credentials: HTTPAuthorizati
         return response
 
 
-@app.get("/api/fetch_conversations/")
-async def fetch_conv(credentials: HTTPAuthorizationCredentials = Depends(security)):
+@app.get("/api/fetch_conversations")
+async def fetch_conv(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1)
+):
     # Get the user ID from the Authorization header
     user_id = credentials.credentials
     session_ids_with_title = chat_store.get_conversation_ids_by_user_id(
-        user_id)
+        user_id, page, size)
+    total_count = chat_store.get_total_conversations_count(user_id)
+    
     return JSONResponse(
         status_code=200,
-        content=session_ids_with_title
+        content={
+            "conversations": session_ids_with_title,
+            "total_count": total_count
+        }
     )
 
 

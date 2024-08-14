@@ -194,7 +194,7 @@ class ElasticChatStore:
         )
         return history
 
-    def get_conversation_ids_by_user_id(self, user_id: str) -> List[dict]:
+    def get_conversation_ids_by_user_id(self, user_id: str, page: int, size: int) -> List[dict]:
         query = {
             "query": {
                 "prefix": {
@@ -203,11 +203,18 @@ class ElasticChatStore:
             },
             "sort": [
                 {"created_at": {"order": "desc"}}
-            ]
+            ],
+            "from": (page - 1) * size,
+            "size": size,
+            "collapse": {
+                "field": "session_id"
+            },
         }
+
         results = self.es_client.search(
-            index=self.index_name, body=query, size=10000
+            index=self.index_name, body=query
         )
+
         conversation_map = {}
         for hit in results['hits']['hits']:
             session_id = hit['_source']['session_id']
@@ -224,7 +231,31 @@ class ElasticChatStore:
                     conversation_map[conversation_id]['date'] = hit['_source']['created_at']
         # Convert the dictionary values to a list
         formatted_result = list(conversation_map.values())
+
         return formatted_result
+
+    def get_total_conversations_count(self, user_id: str) -> int:
+        query = {
+            "query": {
+                "prefix": {
+                    "session_id": f"{user_id}:"
+                }
+            },
+            "size": 0,
+            "aggs": {
+                "unique_session_count": {
+                    "cardinality": {
+                        "field": "session_id"
+                    }
+                }
+            }
+        }
+
+        results = self.es_client.search(
+            index=self.index_name, body=query
+        )
+
+        return results["aggregations"]["unique_session_count"]["value"]
 
     def get_conversation(self, user_id: str, conversation_id: str) -> List[dict]:
         session_id = f"{user_id}:{conversation_id}"
