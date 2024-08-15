@@ -37,9 +37,15 @@ security = HTTPBearer()
 config = get_config()
 
 # =========== MODEL ===========
-llm_model, embed_model = get_model(model_name=ModelName.AZURE_OPENAI, config=config,
-                                   llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
-top_k = 8
+llm_model, embed_model = get_model(model_name=ModelName.OPENAI, config=config,
+                                               llm_model_name=LLMModelName.GPT_4O_MINI, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
+top_k = 12
+try:
+    llm_model.invoke("Answer 'Yes' if you understand me!")
+except:
+    llm_model, embed_model = get_model(model_name=ModelName.AZURE_OPENAI, config=config,
+                                    llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
+    top_k = 8
 
 # =========== DATABASE ===========
 index_ojk = ElasticIndexManager(
@@ -81,7 +87,7 @@ retriever_sikepo_rek_wo_self = lotr_sikepo(vector_store=vector_store_rek, top_k=
 
 # =========== CHAIN ===========
 graph_chain = graph_rag_chain(llm_model, llm_model, graph=graph)
-chain = create_combined_context_chain(
+chain = create_combined_answer_chain(
     llm_model=llm_model,
     graph_chain=graph_chain,
     retriever_ojk=retriever_ojk,
@@ -89,7 +95,7 @@ chain = create_combined_context_chain(
     retriever_sikepo_ketentuan=retriever_sikepo_ket,
     retriever_sikepo_rekam=retriever_sikepo_rek,
 )
-chain_wo_self = create_combined_context_chain(
+chain_wo_self = create_combined_answer_chain(
     llm_model=llm_model,
     graph_chain=graph_chain,
     retriever_ojk=retriever_ojk_wo_self,
