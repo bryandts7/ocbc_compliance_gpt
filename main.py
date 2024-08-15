@@ -19,7 +19,7 @@ from retriever.retriever_bi.retriever_bi import get_retriever_bi
 from retriever.retriever_sikepo.lotr_sikepo import lotr_sikepo
 from database.chat_store import ElasticChatStore
 
-from chain.rag_chain import create_combined_answer_chain, create_chain_with_chat_history, print_answer_stream
+from chain.rag_chain import create_combined_answer_chain, create_chain_with_chat_history, print_answer_stream, create_combined_context_chain
 from chain.chain_sikepo.graph_cypher_sikepo_chain import graph_rag_chain
 
 import logging
@@ -81,7 +81,7 @@ retriever_sikepo_rek_wo_self = lotr_sikepo(vector_store=vector_store_rek, top_k=
 
 # =========== CHAIN ===========
 graph_chain = graph_rag_chain(llm_model, llm_model, graph=graph)
-chain = create_combined_answer_chain(
+chain = create_combined_context_chain(
     llm_model=llm_model,
     graph_chain=graph_chain,
     retriever_ojk=retriever_ojk,
@@ -89,7 +89,7 @@ chain = create_combined_answer_chain(
     retriever_sikepo_ketentuan=retriever_sikepo_ket,
     retriever_sikepo_rekam=retriever_sikepo_rek,
 )
-chain_wo_self = create_combined_answer_chain(
+chain_wo_self = create_combined_context_chain(
     llm_model=llm_model,
     graph_chain=graph_chain,
     retriever_ojk=retriever_ojk_wo_self,
@@ -158,14 +158,21 @@ async def initialize_model(request: ModelRequest):
         model = request.model
         logger.info(f"Received model: {model}")
 
-        if model == 'GPT_4O_MINI':
+        if model == 'Precision':
             llm_model, embed_model = get_model(model_name=ModelName.OPENAI, config=config,
                                                llm_model_name=LLMModelName.GPT_4O_MINI, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
             top_k = 12
-        elif model == 'GPT_35_TURBO':
+            try:
+                llm_model.invoke("Answer 'Yes' if you understand me!")
+            except:
+                llm_model, embed_model = get_model(model_name=ModelName.AZURE_OPENAI, config=config,
+                                               llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
+                top_k = 8
+
+        elif model == 'Efficiency':
             llm_model, embed_model = get_model(model_name=ModelName.AZURE_OPENAI, config=config,
                                                llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
-            top_k = 8
+            top_k = 5
         else:
             raise HTTPException(status_code=400, detail="Invalid model specified")
 
@@ -184,35 +191,65 @@ async def initialize_model(request: ModelRequest):
                                            llm_model=llm_model, embed_model=embed_model, config=config)
         retriever_sikepo_rek_wo_self = lotr_sikepo(vector_store=vector_store_rek, top_k=top_k,
                                                    llm_model=llm_model, embed_model=embed_model, config=config, with_self_query=False)
+        graph_chain = graph_rag_chain(llm_model, llm_model, graph=graph)
 
         # Reinitialize the chain with the new retrievers
-        graph_chain = graph_rag_chain(llm_model, llm_model, graph=graph)
-        chain = create_combined_answer_chain(
-            llm_model=llm_model,
-            graph_chain=graph_chain,
-            retriever_ojk=retriever_ojk,
-            retriever_bi=retriever_bi,
-            retriever_sikepo_ketentuan=retriever_sikepo_ket,
-            retriever_sikepo_rekam=retriever_sikepo_rek,
-        )
-        chain_wo_self = create_combined_answer_chain(
-            llm_model=llm_model,
-            graph_chain=graph_chain,
-            retriever_ojk=retriever_ojk_wo_self,
-            retriever_bi=retriever_bi,
-            retriever_sikepo_ketentuan=retriever_sikepo_ket_wo_self,
-            retriever_sikepo_rekam=retriever_sikepo_rek_wo_self,
-        )
 
-        chain_history = create_chain_with_chat_history(
-            final_chain=chain,
-            chat_store=chat_store,
-        )
+        if model == 'Precision':
+            chain = create_combined_answer_chain(
+                llm_model=llm_model,
+                graph_chain=graph_chain,
+                retriever_ojk=retriever_ojk,
+                retriever_bi=retriever_bi,
+                retriever_sikepo_ketentuan=retriever_sikepo_ket,
+                retriever_sikepo_rekam=retriever_sikepo_rek,
+            )
+            chain_wo_self = create_combined_answer_chain(
+                llm_model=llm_model,
+                graph_chain=graph_chain,
+                retriever_ojk=retriever_ojk_wo_self,
+                retriever_bi=retriever_bi,
+                retriever_sikepo_ketentuan=retriever_sikepo_ket_wo_self,
+                retriever_sikepo_rekam=retriever_sikepo_rek_wo_self,
+            )
 
-        chain_history_wo_self = create_chain_with_chat_history(
-            final_chain=chain_wo_self,
-            chat_store=chat_store,
-        )
+            chain_history = create_chain_with_chat_history(
+                final_chain=chain,
+                chat_store=chat_store,
+            )
+
+            chain_history_wo_self = create_chain_with_chat_history(
+                final_chain=chain_wo_self,
+                chat_store=chat_store,
+            )
+        elif model == 'Efficiency':
+            chain = create_combined_context_chain(
+                llm_model=llm_model,
+                graph_chain=graph_chain,
+                retriever_ojk=retriever_ojk,
+                retriever_bi=retriever_bi,
+                retriever_sikepo_ketentuan=retriever_sikepo_ket,
+                retriever_sikepo_rekam=retriever_sikepo_rek,
+            )
+            chain_wo_self = create_combined_context_chain(
+                llm_model=llm_model,
+                graph_chain=graph_chain,
+                retriever_ojk=retriever_ojk_wo_self,
+                retriever_bi=retriever_bi,
+                retriever_sikepo_ketentuan=retriever_sikepo_ket_wo_self,
+                retriever_sikepo_rekam=retriever_sikepo_rek_wo_self,
+            )
+
+            chain_history = create_chain_with_chat_history(
+                final_chain=chain,
+                chat_store=chat_store,
+            )
+
+            chain_history_wo_self = create_chain_with_chat_history(
+                final_chain=chain_wo_self,
+                chat_store=chat_store,
+            )
+
 
         return JSONResponse(
             status_code=200,
