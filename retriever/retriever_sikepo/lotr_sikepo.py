@@ -26,15 +26,15 @@ def to_documents(context: list[_DocumentWithState]):
 
 def lotr_sikepo(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_model: Embeddings, config: dict = {}, top_k: int = 8, with_self_query: bool = True):
 
-    retriever_mmr = vector_store.as_retriever(search_type="mmr", search_kwargs={'k': top_k, 'lambda_mult': 0.25})
+    retriever_mmr = vector_store.as_retriever(search_type="mmr", search_kwargs={'k': top_k, 'lambda_mult': 0.85, 'fetch_k': 40})
     retriever_similarity = vector_store.as_retriever(search_type="similarity", search_kwargs={'k': top_k})
     self_query_retriever = self_query_retriever_sikepo(
         llm_model=llm_model, vector_store=vector_store)
 
-    lotr = MergerRetriever(retrievers=[retriever_similarity, retriever_mmr])
+    lotr = retriever_mmr
     # merge retrievers
     if with_self_query:
-        lotr = MergerRetriever(retrievers=[self_query_retriever, retriever_similarity, retriever_mmr])
+        lotr = MergerRetriever(retrievers=[self_query_retriever, retriever_similarity])
 
 
     # remove redundant documents

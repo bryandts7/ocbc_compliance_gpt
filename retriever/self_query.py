@@ -33,4 +33,12 @@ def self_query(llm_model: BaseLanguageModel, vector_store: VectorStore, document
         search_kwargs={'k': top_k}
     )
 
+    if search_type == "mmr":
+        retriever = SelfQueryRetriever(
+        query_constructor=query_constructor,
+        vectorstore=vector_store,
+        search_type=search_type,
+        search_kwargs={'k': top_k, 'lambda_mult': 0.75, 'fetch_k': 40}
+    )
+
     return retriever

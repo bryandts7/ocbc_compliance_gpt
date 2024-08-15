@@ -25,11 +25,11 @@ def get_retriever_bi(vector_store: VectorStore, llm_model: BaseLanguageModel, em
     )
     retriever_mmr = vector_store.as_retriever(
         search_type="mmr",
-        search_kwargs={'k': top_k, 'lambda_mult': 0.25}
+        search_kwargs={'k': top_k, 'lambda_mult': 0.85}
     )
 
     # merge retrievers
-    lotr = MergerRetriever(retrievers=[retriever_similarity, retriever_mmr])
+    lotr = retriever_mmr
 
     # remove redundant documents
     filter = EmbeddingsRedundantFilter(embeddings=embed_model)

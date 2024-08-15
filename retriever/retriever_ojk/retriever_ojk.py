@@ -38,13 +38,13 @@ def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, e
     )
     retriever_mmr = vector_store.as_retriever(
         search_type="mmr",
-        search_kwargs={'k': top_k, 'lambda_mult': 0.25}
+        search_kwargs={'k': top_k, 'lambda_mult': 0.85, 'fetch_k': 40}
     )
 
-    lotr = MergerRetriever(retrievers=[retriever_similarity, retriever_mmr])
+    lotr = retriever_mmr
     # merge retrievers
     if with_self_query:
-        lotr = MergerRetriever(retrievers=[retriever_self_query_mmr, retriever_similarity, retriever_mmr])
+        lotr = MergerRetriever(retrievers=[retriever_self_query_mmr, retriever_similarity])
 
     # remove redundant documents
     filter = EmbeddingsRedundantFilter(embeddings=embed_model)
