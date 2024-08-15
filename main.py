@@ -158,7 +158,7 @@ async def initialize_model(request: ModelRequest):
         model = request.model
         logger.info(f"Received model: {model}")
 
-        if model == 'Precision':
+        if model == 'Quality':
             llm_model, embed_model = get_model(model_name=ModelName.OPENAI, config=config,
                                                llm_model_name=LLMModelName.GPT_4O_MINI, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
             top_k = 12
@@ -169,7 +169,7 @@ async def initialize_model(request: ModelRequest):
                                                llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
                 top_k = 8
 
-        elif model == 'Efficiency':
+        elif model == 'Speed':
             llm_model, embed_model = get_model(model_name=ModelName.AZURE_OPENAI, config=config,
                                                llm_model_name=LLMModelName.GPT_35_TURBO, embedding_model_name=EmbeddingModelName.EMBEDDING_3_SMALL)
             top_k = 5
@@ -195,7 +195,7 @@ async def initialize_model(request: ModelRequest):
 
         # Reinitialize the chain with the new retrievers
 
-        if model == 'Precision':
+        if model == 'Quality':
             chain = create_combined_answer_chain(
                 llm_model=llm_model,
                 graph_chain=graph_chain,
@@ -222,7 +222,7 @@ async def initialize_model(request: ModelRequest):
                 final_chain=chain_wo_self,
                 chat_store=chat_store,
             )
-        elif model == 'Efficiency':
+        elif model == 'Speed':
             chain = create_combined_context_chain(
                 llm_model=llm_model,
                 graph_chain=graph_chain,
