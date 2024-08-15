@@ -5,7 +5,7 @@ from langchain.retrievers import (
     MergerRetriever,
 )
 from langchain_community.document_transformers import (
-    EmbeddingsRedundantFilter,
+    EmbeddingsRedundantFilter, LongContextReorder
 )
 # from langchain.retrievers.document_compressors.flashrank_rerank import FlashrankRerank
 # from langchain_community.document_compressors.rankllm_rerank import RankLLMRerank
@@ -48,7 +48,8 @@ def get_retriever_ojk(vector_store: VectorStore, llm_model: BaseLanguageModel, e
 
     # remove redundant documents
     filter = EmbeddingsRedundantFilter(embeddings=embed_model)
-    pipeline = DocumentCompressorPipeline(transformers=[filter])
+    reordering = LongContextReorder()
+    pipeline = DocumentCompressorPipeline(transformers=[filter, reordering])
     compression_retriever = ContextualCompressionRetriever(
         base_compressor=pipeline, base_retriever=lotr
     )

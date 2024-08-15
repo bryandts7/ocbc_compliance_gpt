@@ -7,7 +7,7 @@ from langchain.retrievers import (
 )
 from langchain_core.runnables import RunnableLambda
 from langchain_community.document_transformers import (
-    EmbeddingsRedundantFilter, EmbeddingsClusteringFilter
+    EmbeddingsRedundantFilter, EmbeddingsClusteringFilter, LongContextReorder
 )
 # from langchain.retrievers.document_compressors.flashrank_rerank import FlashrankRerank
 # from langchain_community.document_compressors.rankllm_rerank import RankLLMRerank
@@ -39,7 +39,8 @@ def lotr_sikepo(vector_store: VectorStore, llm_model: BaseLanguageModel, embed_m
 
     # remove redundant documents
     filter = EmbeddingsRedundantFilter(embeddings=embed_model)
-    pipeline = DocumentCompressorPipeline(transformers=[filter])
+    reordering = LongContextReorder()
+    pipeline = DocumentCompressorPipeline(transformers=[filter, reordering])
     compression_retriever = ContextualCompressionRetriever(
         base_compressor=pipeline, base_retriever=lotr
     )
