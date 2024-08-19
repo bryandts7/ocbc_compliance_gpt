@@ -59,7 +59,7 @@ def get_azure_openai_llm(azure_endpoint: str, azure_deployment: str, api_version
     if llm_model_name == LLMModelName.GPT_AZURE:
         llm = AzureChatOpenAI(
             azure_endpoint=azure_endpoint,
-            azure_deployment=azure_deployment,
+            azure_deployment='gpt-4o-mini',
             api_version=api_version,
             api_key=api_key,
             temperature=0.0,
@@ -68,7 +68,7 @@ def get_azure_openai_llm(azure_endpoint: str, azure_deployment: str, api_version
     elif llm_model_name == LLMModelName.GPT_4O:
         llm = AzureChatOpenAI(
             azure_endpoint=azure_endpoint,
-            azure_deployment=azure_deployment,
+            azure_deployment='gpt-4o',
             api_version=api_version,
             api_key=api_key,
             temperature=0.0,
@@ -77,7 +77,7 @@ def get_azure_openai_llm(azure_endpoint: str, azure_deployment: str, api_version
     elif llm_model_name == LLMModelName.GPT_35_TURBO:
         llm = AzureChatOpenAI(
             azure_endpoint=azure_endpoint,
-            azure_deployment=azure_deployment,
+            azure_deployment='gpt-35-turbo-16k',
             api_version=api_version,
             api_key=api_key,
             temperature=0.0,
