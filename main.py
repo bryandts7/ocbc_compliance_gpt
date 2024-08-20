@@ -23,6 +23,7 @@ from chain.rag_chain import create_combined_answer_chain, create_chain_with_chat
 from chain.chain_sikepo.graph_cypher_sikepo_chain import graph_rag_chain
 
 import logging
+import urllib.parse as urlparse
 
 # Apply nest_asyncio and filter warnings
 nest_asyncio.apply()
@@ -277,7 +278,9 @@ async def initialize_model(request: ModelRequest):
 
 @app.get("/api/chat/")
 async def chat_endpoint(message: str, conv_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    conv_id = urlparse.unquote(conv_id)
     user_id = credentials.credentials
+    user_id = urlparse.unquote(user_id)
     try:
         try:
             response = StreamingResponse(print_answer_stream(
@@ -298,6 +301,7 @@ async def chat_endpoint(message: str, conv_id: str, credentials: HTTPAuthorizati
 @app.get("/api/fetch_conversations/")
 async def fetch_conv(credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_id = credentials.credentials
+    user_id = urlparse.unquote(user_id)
     try:
         session_ids_with_title = chat_store.get_conversation_ids_by_user_id(user_id)
         return JSONResponse(
@@ -314,9 +318,17 @@ async def fetch_conv(credentials: HTTPAuthorizationCredentials = Depends(securit
 
 @app.get("/api/fetch_messages/{conversation_id}")
 async def fetch_message(conversation_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # decode conversation_id
+    conversation_id = urlparse.unquote(conversation_id)
     user_id = credentials.credentials
+    user_id = urlparse.unquote(user_id)
     try:
         messages = chat_store.get_conversation(user_id=user_id, conversation_id=conversation_id)
+        if not messages:
+            return JSONResponse(
+                status_code=404,
+                content={"message": "Conversation not found"}
+            )
         return JSONResponse(
             status_code=200,
             content=messages
@@ -335,7 +347,10 @@ async def rename_conversation(
     new_title: str = Query(..., description="New title for the conversation"),
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
+    # decode conversation_id
+    conversation_id = urlparse.unquote(conversation_id)
     user_id = credentials.credentials
+    user_id = urlparse.unquote(user_id)
     try:
         success = chat_store.rename_title(user_id, conversation_id, new_title)
         if success:
@@ -354,7 +369,10 @@ async def rename_conversation(
 
 @app.delete("/api/delete_conversation/{conversation_id}")
 async def delete_conversation(conversation_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # decode conversation_id
+    conversation_id = urlparse.unquote(conversation_id)
     user_id = credentials.credentials
+    user_id = urlparse.unquote(user_id)
     try:
         success = chat_store.clear_session_history(user_id, conversation_id)
         if success:
@@ -374,6 +392,7 @@ async def delete_conversation(conversation_id: str, credentials: HTTPAuthorizati
 @app.delete("/api/delete_all_conversations/")
 async def delete_all_user_chats(credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_id = credentials.credentials
+    user_id = urlparse.unquote(user_id)
     try:
         success = chat_store.clear_conversation_by_userid(user_id)
         if success:

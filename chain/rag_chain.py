@@ -2,10 +2,10 @@ from operator import itemgetter
 from database.chat_store import ElasticChatStore
 from langchain_core.runnables import ConfigurableFieldSpec, RunnablePassthrough, RunnableLambda, RunnableBranch, RunnableParallel
 from langchain_core.retrievers import BaseRetriever
-from langchain_core.runnables.history import RunnableWithMessageHistory
 from utils.models import ModelName
 import json
 from langchain_core.runnables.base import Runnable
+from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain.chains.graph_qa.cypher import GraphCypherQAChain
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
@@ -276,7 +276,7 @@ def get_response(question: str, chain, user_id: str, conversation_id: str):
     return response
 
 
-async def print_answer_stream(question: str, chain, user_id: str, conversation_id: str):
+async def print_answer_stream(question: str, chain: RunnableWithMessageHistory, user_id: str, conversation_id: str):
     async for chunk in chain.astream({"question": question}, config={"configurable": {"user_id": user_id, "conversation_id": conversation_id}}):
         if 'answer' in chunk:
             # yield f"data: {chunk['answer'] or ''}\n\n"
@@ -286,7 +286,8 @@ async def print_answer_stream(question: str, chain, user_id: str, conversation_i
             
 
 
-async def print_answer_stream2(question: str, chain, user_id: str, conversation_id: str):
-    async for chunk in chain.astream({"question": question}, config={"configurable": {"user_id": user_id, "conversation_id": conversation_id}}):
-        if 'answer' in chunk:
-            print(chunk['answer'], end='', flush=True)
+async def print_answer_stream2(question: str, chain: RunnableWithMessageHistory, user_id: str, conversation_id: str):
+    async for chunk in chain.astream_events({"question": question}, config={"configurable": {"user_id": user_id, "conversation_id": conversation_id}}, version="v1"):
+        # if 'answer' in chunk:
+        #     print(chunk['answer'], end='', flush=True)
+        print(chunk, end='\n', flush=True)
