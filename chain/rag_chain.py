@@ -142,12 +142,12 @@ def create_combined_answer_chain(retriever_ojk: BaseRetriever, retriever_sikepo_
     )
     bi_chain = create_bi_chain(
         qa_system_prompt_str=QA_SYSTEM_PROMPT_BI,
-        llm_model=llm_model,
+        llm_model=efficient_llm,
         retriever=retriever_bi
     )
     sikepo_ketentuan_chain = create_sikepo_ketentuan_chain(
         qa_system_prompt_str=QA_SYSTEM_PROMPT_SIKEPO,
-        llm_model=llm_model,
+        llm_model=efficient_llm,
         retriever=retriever_sikepo_ketentuan
     )
     sikepo_rekam_chain = create_sikepo_rekam_chain(
