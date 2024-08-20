@@ -24,6 +24,8 @@ from chain.chain_sikepo.graph_cypher_sikepo_chain import graph_rag_chain
 
 import logging
 
+from langchain.smith.evaluation.progress import ProgressBarCallback
+
 # Apply nest_asyncio and filter warnings
 nest_asyncio.apply()
 warnings.filterwarnings("ignore")
@@ -153,7 +155,7 @@ async def initialize_model(request: ModelRequest):
             top_k = 12
 
         elif model == 'Speed':
-            top_k = 5
+            top_k = 8
         else:
             raise HTTPException(status_code=400, detail="Invalid model specified")
 
