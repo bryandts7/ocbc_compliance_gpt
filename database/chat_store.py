@@ -2,6 +2,7 @@ from typing import List, Optional
 import logging
 import json
 from time import time
+import urllib.parse as urlparse
 
 from elasticsearch import Elasticsearch, exceptions as es_exceptions
 from langchain_core.messages import BaseMessage, message_to_dict, messages_from_dict
@@ -214,7 +215,7 @@ class ElasticChatStore:
             conversation_id = session_id.split(":")[1]
             if conversation_id not in conversation_map:
                 conversation_map[conversation_id] = {
-                    "id": conversation_id,
+                    "id": urlparse.quote(conversation_id),
                     "title": hit['_source']['title'],
                     "date": hit['_source']['created_at']
                 }
