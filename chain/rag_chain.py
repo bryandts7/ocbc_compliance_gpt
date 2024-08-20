@@ -121,12 +121,17 @@ def printing(results):
 
 
 def create_combined_answer_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
-                                 graph_chain: GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
+                                 graph_chain: GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None, best_llm = None, efficient_llm = None):
+    if best_llm is None:
+        best_llm = llm_model
+    if efficient_llm is None:
+        efficient_llm = llm_model
+
     CONTEXTUALIZE_Q_PROMPT = PromptTemplate.from_template(
         CONTEXTUALIZE_Q_PROMPT_STR)
-    _inputs_question = CONTEXTUALIZE_Q_PROMPT | llm_model | StrOutputParser()
+    _inputs_question = CONTEXTUALIZE_Q_PROMPT | efficient_llm | StrOutputParser()
 
-    question_router = question_router_chain(llm_model, ROUTER_PROMPT)
+    question_router = question_router_chain(best_llm, ROUTER_PROMPT)
     QA_SYSTEM_PROMPT = PromptTemplate(input_variables=[
                                       "answer_ojk", "answer_bi", "answer_sikepo", "question"], template=QA_SYSTEM_TEMPLATE_COMBINED_ANSWER)
 
@@ -137,12 +142,12 @@ def create_combined_answer_chain(retriever_ojk: BaseRetriever, retriever_sikepo_
     )
     bi_chain = create_bi_chain(
         qa_system_prompt_str=QA_SYSTEM_PROMPT_BI,
-        llm_model=llm_model,
+        llm_model=efficient_llm,
         retriever=retriever_bi
     )
     sikepo_ketentuan_chain = create_sikepo_ketentuan_chain(
         qa_system_prompt_str=QA_SYSTEM_PROMPT_SIKEPO,
-        llm_model=llm_model,
+        llm_model=efficient_llm,
         retriever=retriever_sikepo_ketentuan
     )
     sikepo_rekam_chain = create_sikepo_rekam_chain(
@@ -174,7 +179,7 @@ def create_combined_answer_chain(retriever_ojk: BaseRetriever, retriever_sikepo_
         "rewrited question":   itemgetter("question"),
         "context":   RunnableLambda(merge_context),
         "context_text": RunnableLambda(merge_answer),
-        "answer":   QA_SYSTEM_PROMPT | llm_model | StrOutputParser()
+        "answer":   QA_SYSTEM_PROMPT | best_llm | StrOutputParser()
     }
 
     full_chain = _inputs_question | {
@@ -190,11 +195,15 @@ def create_combined_answer_chain(retriever_ojk: BaseRetriever, retriever_sikepo_
 
 
 def create_combined_context_chain(retriever_ojk: BaseRetriever, retriever_sikepo_rekam: BaseRetriever, retriever_sikepo_ketentuan: BaseRetriever,
-                                  graph_chain: GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None):
+                                  graph_chain: GraphCypherQAChain, llm_model: ModelName, retriever_bi: BaseRetriever = None, best_llm = None, efficient_llm = None):
+    if best_llm is None:
+        best_llm = llm_model
+    if efficient_llm is None:
+        efficient_llm = llm_model
 
     CONTEXTUALIZE_Q_PROMPT = PromptTemplate.from_template(
         CONTEXTUALIZE_Q_PROMPT_STR)
-    _inputs_question = CONTEXTUALIZE_Q_PROMPT | llm_model | StrOutputParser()
+    _inputs_question = CONTEXTUALIZE_Q_PROMPT | efficient_llm | StrOutputParser()
 
     QA_SYSTEM_PROMPT = PromptTemplate(input_variables=[
                                       "context_ojk", "context_bi", "context_sikepo", "question"], template=QA_SYSTEM_TEMPLATE)
@@ -220,7 +229,7 @@ def create_combined_context_chain(retriever_ojk: BaseRetriever, retriever_sikepo
         "answer":   QA_SYSTEM_PROMPT | llm_model | StrOutputParser()
     }
 
-    question_router = question_router_chain(llm_model, ROUTER_PROMPT)
+    question_router = question_router_chain(best_llm, ROUTER_PROMPT)
 
     full_chain = _inputs_question | {
         "result": question_router | StrOutputParser(),
